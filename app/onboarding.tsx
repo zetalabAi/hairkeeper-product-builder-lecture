@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import { View, Text, ScrollView, Dimensions, Pressable, Platform } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useColors } from "@/hooks/use-colors";
 import { router } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import * as Haptics from "expo-haptics";
@@ -11,23 +13,24 @@ const ONBOARDING_SLIDES = [
   {
     title: "실제 시술, 안전한 공유",
     description: "고객의 헤어 스타일은 그대로,\n얼굴만 안전하게 교체합니다",
-    emoji: "✂️",
+    icon: "cut" as const,
   },
   {
     title: "얼굴만 바꿔요",
     description: "AI가 자연스러운 얼굴로 교체하여\n초상권 걱정 없이 포트폴리오를 만듭니다",
-    emoji: "🎭",
+    icon: "people" as const,
   },
   {
     title: "3초 만에 완성",
     description: "간단한 선택만으로\nSNS 홍보용 이미지를 빠르게 생성합니다",
-    emoji: "⚡",
+    icon: "flash" as const,
   },
 ];
 
 export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  const colors = useColors();
 
   const handleScroll = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
@@ -101,7 +104,9 @@ export default function OnboardingScreen() {
             style={{ width: SCREEN_WIDTH }}
             className="flex-1 items-center justify-center px-8"
           >
-            <Text style={{ fontSize: 120, marginBottom: 40 }}>{slide.emoji}</Text>
+            <View style={{ marginBottom: 40 }}>
+              <Ionicons name={slide.icon} size={120} color={colors.primary} />
+            </View>
             <Text className="text-3xl font-bold text-foreground text-center mb-4">
               {slide.title}
             </Text>

@@ -4,23 +4,24 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
+import { Ionicons } from "@expo/vector-icons";
 
 type Nationality = "korea" | "japan";
 type Gender = "female" | "male";
 
 const FEMALE_STYLES = [
-  { id: "청순", label: "청순", icon: "🌸" },
-  { id: "귀여움", label: "귀여움", icon: "🐰" },
-  { id: "아름다움", label: "아름다움", icon: "✨" },
-  { id: "도도", label: "도도", icon: "👑" },
-  { id: "섹시", label: "섹시", icon: "💋" },
+  { id: "청순", label: "청순" },
+  { id: "귀여움", label: "귀여움" },
+  { id: "아름다움", label: "아름다움" },
+  { id: "도도", label: "도도" },
+  { id: "섹시", label: "섹시" },
 ];
 
 const MALE_STYLES = [
-  { id: "늠름", label: "늠름", icon: "🦁" },
-  { id: "섹시", label: "섹시", icon: "🔥" },
-  { id: "남성적", label: "남성적", icon: "💪" },
-  { id: "강한 인상", label: "강한 인상", icon: "⚡" },
+  { id: "늠름", label: "늠름" },
+  { id: "섹시", label: "섹시" },
+  { id: "남성적", label: "남성적" },
+  { id: "강한 인상", label: "강한 인상" },
 ];
 
 export default function PhotoEditScreen() {
@@ -95,7 +96,7 @@ export default function PhotoEditScreen() {
             },
           ]}
         >
-          <Text className="text-base text-primary">{"<>"}</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </Pressable>
         <Text className="text-lg font-semibold text-foreground">스타일 선택</Text>
       </View>
@@ -255,9 +256,7 @@ export default function PhotoEditScreen() {
                     ]}
                     className="py-6 rounded-xl items-center"
                   >
-                    <View className="w-16 h-16 rounded-full bg-surface items-center justify-center mb-3">
-                      <Text style={{ fontSize: 32 }}>{s.icon}</Text>
-                    </View>
+
                     <Text
                       className={`text-base font-semibold ${
                         style === s.id ? "text-primary" : "text-foreground"
@@ -267,7 +266,7 @@ export default function PhotoEditScreen() {
                     </Text>
                     {style === s.id && (
                       <View className="absolute top-2 right-2">
-                        <Text style={{ fontSize: 16 }}>✓</Text>
+                        <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
                       </View>
                     )}
                   </Pressable>

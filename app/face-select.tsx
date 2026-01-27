@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
+import { Ionicons } from "@expo/vector-icons";
 
 // 테스트용 더미 얼굴 데이터 (실제로는 서버에서 가져옴)
 const DUMMY_FACES = Array.from({ length: 12 }, (_, i) => ({
@@ -112,7 +113,7 @@ export default function FaceSelectScreen() {
               alignItems: "center",
             }}
           >
-            <Text style={{ color: "white", fontSize: 16 }}>✓</Text>
+            <Ionicons name="checkmark-circle" size={24} color="white" />
           </View>
         )}
       </Pressable>
@@ -131,7 +132,7 @@ export default function FaceSelectScreen() {
             },
           ]}
         >
-          <Text className="text-base text-primary">취소</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </Pressable>
         <Text className="text-lg font-semibold text-foreground">얼굴 선택</Text>
         <View style={{ width: 40 }} />

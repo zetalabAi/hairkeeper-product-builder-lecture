@@ -2,11 +2,10 @@ import { View, Text, Pressable, Platform, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import * as Haptics from "expo-haptics";
-import { useAuth } from "@/hooks/use-auth";
 import { useColors } from "@/hooks/use-colors";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function HomeScreen() {
-  const { user, isAuthenticated, loading } = useAuth();
   const colors = useColors();
 
   const handlePhotoSelect = () => {
@@ -43,7 +42,7 @@ export default function HomeScreen() {
             },
           ]}
         >
-          <Text style={{ fontSize: 24 }}>🏠</Text>
+          <Ionicons name="add" size={64} color="white" />
         </Pressable>
       </View>
 

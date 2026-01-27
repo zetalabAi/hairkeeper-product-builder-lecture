@@ -5,6 +5,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function PhotoSelectScreen() {
   const colors = useColors();
@@ -114,7 +115,8 @@ export default function PhotoSelectScreen() {
             },
           ]}
         >
-          <Text className="text-base text-primary">취소</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
+          <Text className="text-base text-primary ml-2">취소</Text>
         </Pressable>
       </View>
 
@@ -138,7 +140,7 @@ export default function PhotoSelectScreen() {
           ]}
           className="py-6 rounded-2xl items-center"
         >
-          <Text style={{ fontSize: 48, marginBottom: 8 }}>📷</Text>
+          <Ionicons name="camera" size={48} color="white" style={{ marginBottom: 8 }} />
           <Text className="text-white text-lg font-semibold">카메라로 촬영</Text>
         </Pressable>
 
@@ -158,7 +160,7 @@ export default function PhotoSelectScreen() {
           ]}
           className="py-6 rounded-2xl items-center"
         >
-          <Text style={{ fontSize: 48, marginBottom: 8 }}>🖼️</Text>
+          <Ionicons name="images" size={48} color={colors.foreground} style={{ marginBottom: 8 }} />
           <Text className="text-foreground text-lg font-semibold">
             앨범에서 선택
           </Text>

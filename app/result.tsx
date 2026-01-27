@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View, Text, Pressable, Platform, Image, Alert, Dimensions, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import * as Haptics from "expo-haptics";
@@ -115,7 +116,7 @@ export default function ResultScreen() {
             },
           ]}
         >
-          <Text className="text-base text-primary">{"<>"}</Text>
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </Pressable>
         <Text className="text-lg font-semibold text-foreground">결과 확인</Text>
       </View>
@@ -194,9 +195,7 @@ export default function ResultScreen() {
                   borderColor: "white",
                 }}
               >
-                <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>
-                  ⟷
-                </Text>
+                <Ionicons name="swap-horizontal" size={20} color="white" />
               </View>
             </Animated.View>
           </GestureDetector>
@@ -240,9 +239,10 @@ export default function ResultScreen() {
         </Text>
 
         {/* Check Message */}
-        <View className="flex-row items-center mt-4">
+        <View className="flex-row items-center mt-4 gap-2">
+          <Ionicons name="checkmark-circle" size={18} color={colors.success} />
           <Text className="text-success text-sm font-semibold">
-            ✓ 머리는 절대 변형되지 않았습니다
+            머리는 절대 변형되지 않았습니다
           </Text>
         </View>
 
