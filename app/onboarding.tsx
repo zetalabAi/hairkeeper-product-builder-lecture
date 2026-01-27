@@ -61,6 +61,7 @@ export default function OnboardingScreen() {
 
   const handleComplete = async () => {
     await AsyncStorage.setItem("onboarding_completed", "true");
+    // 테스트용: 로그인 우회, 바로 홈으로 이동
     router.replace("/(tabs)" as any);
   };
 

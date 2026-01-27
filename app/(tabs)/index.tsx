@@ -25,35 +25,7 @@ export default function HomeScreen() {
     console.log("Settings");
   };
 
-  if (loading) {
-    return (
-      <ScreenContainer className="items-center justify-center">
-        <Text className="text-muted">로딩 중...</Text>
-      </ScreenContainer>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <ScreenContainer className="items-center justify-center px-8">
-        <Text className="text-2xl font-bold text-foreground mb-4">
-          로그인이 필요합니다
-        </Text>
-        <Pressable
-          onPress={() => router.push("/login" as any)}
-          style={({ pressed }) => [
-            {
-              transform: [{ scale: pressed ? 0.97 : 1 }],
-              opacity: pressed ? 0.9 : 1,
-            },
-          ]}
-          className="bg-primary px-8 py-4 rounded-full"
-        >
-          <Text className="text-white text-base font-semibold">로그인하기</Text>
-        </Pressable>
-      </ScreenContainer>
-    );
-  }
+  // 테스트용: 로그인 체크 제거
 
   return (
     <ScreenContainer>
