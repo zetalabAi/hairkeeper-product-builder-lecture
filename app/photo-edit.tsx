@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, Pressable, Platform } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
+import { SubScreenHeader } from "@/components/sub-screen-header";
 import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
@@ -48,10 +49,6 @@ export default function PhotoEditScreen() {
   const [gender, setGender] = useState<Gender | null>(null);
   const [style, setStyle] = useState<string | null>(null);
 
-  const handleBack = () => {
-    router.back();
-  };
-
   const handleNext = () => {
     if (!nationality || !gender || !style) return;
 
@@ -98,18 +95,7 @@ export default function PhotoEditScreen() {
   return (
     <ScreenContainer className="bg-background">
       {/* Header */}
-      <View className="flex-row items-center px-6 py-4">
-        <Pressable
-          onPress={handleBack}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.6 : 1,
-            marginRight: 16,
-          })}
-        >
-          <Ionicons name="chevron-back" size={24} color={colors.primary} />
-        </Pressable>
-        <Text className="text-lg font-semibold text-foreground">스타일 선택</Text>
-      </View>
+      <SubScreenHeader title="스타일 선택" />
 
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View className="px-6 py-4">

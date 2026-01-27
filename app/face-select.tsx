@@ -1,6 +1,7 @@
 import { View, Text, FlatList, Pressable, Platform } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
+import { SubScreenHeader } from "@/components/sub-screen-header";
 import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,6 @@ export default function FaceSelectScreen() {
   const colors = useColors();
 
   const [selectedFaceId, setSelectedFaceId] = useState<string | null>(null);
-
-  const handleBack = () => {
-    router.back();
-  };
 
   const handleSelectFace = (faceId: string) => {
     if (Platform.OS !== "web") {
@@ -107,18 +104,7 @@ export default function FaceSelectScreen() {
   return (
     <ScreenContainer className="bg-background">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-6 py-4">
-        <Pressable
-          onPress={handleBack}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.6 : 1,
-          })}
-        >
-          <Ionicons name="chevron-back" size={24} color={colors.primary} />
-        </Pressable>
-        <Text className="text-lg font-semibold text-foreground">얼굴 선택</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <SubScreenHeader title="얼굴 선택" />
 
       {/* Info */}
       <View className="px-6 mb-4">

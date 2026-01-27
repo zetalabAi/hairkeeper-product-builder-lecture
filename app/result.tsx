@@ -1,6 +1,7 @@
 import { View, Text, Pressable, Platform, Animated } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
+import { SubScreenHeader } from "@/components/sub-screen-header";
 import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
@@ -16,10 +17,6 @@ export default function ResultScreen() {
 
   const [showBefore, setShowBefore] = useState(false);
   const sliderPosition = useRef(new Animated.Value(0)).current;
-
-  const handleBack = () => {
-    router.back();
-  };
 
   const handleToggle = () => {
     if (Platform.OS !== "web") {
@@ -66,18 +63,7 @@ export default function ResultScreen() {
   return (
     <ScreenContainer className="bg-background">
       {/* Header */}
-      <View className="flex-row items-center px-6 py-4">
-        <Pressable
-          onPress={handleBack}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.6 : 1,
-            marginRight: 16,
-          })}
-        >
-          <Ionicons name="chevron-back" size={24} color={colors.primary} />
-        </Pressable>
-        <Text className="text-lg font-semibold text-foreground">결과 확인</Text>
-      </View>
+      <SubScreenHeader title="결과 확인" />
 
       {/* Content */}
       <View className="flex-1 justify-center px-6">

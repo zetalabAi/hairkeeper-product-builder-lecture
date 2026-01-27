@@ -1,6 +1,7 @@
 import { View, Text, Pressable, Platform } from "react-native";
 import { router } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
+import { SubScreenHeader } from "@/components/sub-screen-header";
 import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -8,10 +9,6 @@ import * as Haptics from "expo-haptics";
 
 export default function PhotoSelectScreen() {
   const colors = useColors();
-
-  const handleBack = () => {
-    router.back();
-  };
 
   const handleSelectFromCamera = async () => {
     if (Platform.OS !== "web") {
@@ -68,18 +65,7 @@ export default function PhotoSelectScreen() {
   return (
     <ScreenContainer className="bg-background">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-6 py-4">
-        <Pressable
-          onPress={handleBack}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.6 : 1,
-          })}
-        >
-          <Ionicons name="chevron-back" size={24} color={colors.primary} />
-        </Pressable>
-        <Text className="text-lg font-semibold text-foreground">사진 선택</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <SubScreenHeader title="사진 선택" />
 
       {/* Content */}
       <View className="flex-1 justify-center px-6">
