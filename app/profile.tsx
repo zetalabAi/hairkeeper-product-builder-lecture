@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { useDemoAuth } from "@/lib/demo-auth-context";
 
 type ProfileItem = {
   id: string;
@@ -17,32 +18,36 @@ type ProfileItem = {
 
 export default function ProfileScreen() {
   const colors = useColors();
+  const { user, isLoggedIn, login, logout } = useDemoAuth();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    router.push("/login" as any);
+    await login();
   };
 
-  const handlePress = (item: string) => {
+  const handlePress = async (item: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+    
+    if (item === "logout") {
+      await logout();
+      return;
+    }
+    
     // TODO: 각 프로필 항목 처리
     console.log(`Pressed: ${item}`);
   };
-
-  // 로그인 상태 (테스트용 false)
-  const isLoggedIn = false;
 
   const profileItems: ProfileItem[] = [
     {
       id: "subscription",
       label: "구독 관리",
       icon: "card-outline",
-      subtitle: "프리미엄 플랜",
-      badge: "Premium",
+      subtitle: user?.subscription === "premium" ? "프리미엄 플랜" : "무료 플랜",
+      badge: user?.subscription === "premium" ? "Premium" : undefined,
     },
     {
       id: "payment",
@@ -107,7 +112,7 @@ export default function ProfileScreen() {
 
             {/* User Info */}
             <View style={{ flex: 1 }}>
-              {isLoggedIn ? (
+              {isLoggedIn && user ? (
                 <>
                   <Text
                     style={{
@@ -117,7 +122,7 @@ export default function ProfileScreen() {
                       marginBottom: 4,
                     }}
                   >
-                    사용자 이름
+                    {user.name}
                   </Text>
                   <Text
                     style={{
@@ -125,7 +130,7 @@ export default function ProfileScreen() {
                       color: colors.muted,
                     }}
                   >
-                    user@example.com
+                    {user.email}
                   </Text>
                 </>
               ) : (
@@ -157,7 +162,7 @@ export default function ProfileScreen() {
           {!isLoggedIn && (
             <View style={{ marginTop: 20 }}>
               <Button
-                label="로그인"
+                label="로그인 (데모)"
                 variant="primary"
                 size="medium"
                 fullWidth
