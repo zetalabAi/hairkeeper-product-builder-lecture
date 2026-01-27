@@ -3,7 +3,6 @@ import { router } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/hooks/use-auth";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 
 export default function HomeScreen() {
@@ -28,19 +27,23 @@ export default function HomeScreen() {
   // 테스트용: 로그인 체크 제거
 
   return (
-    <ScreenContainer>
+    <ScreenContainer className="bg-background">
       {/* Header */}
       <View className="flex-row items-center justify-between px-6 py-4">
-        <Text className="text-2xl font-bold text-foreground">머리보존 AI</Text>
+        <Text className="text-2xl font-bold text-foreground">머리보존</Text>
         <Pressable
           onPress={handleSettings}
           style={({ pressed }) => [
             {
               opacity: pressed ? 0.6 : 1,
+              width: 40,
+              height: 40,
+              justifyContent: "center",
+              alignItems: "center",
             },
           ]}
         >
-          <IconSymbol name="chevron.right" size={24} color={colors.foreground} />
+          <Text style={{ fontSize: 24 }}>🏠</Text>
         </Pressable>
       </View>
 
@@ -54,41 +57,35 @@ export default function HomeScreen() {
                 {
                   transform: [{ scale: pressed ? 0.97 : 1 }],
                   opacity: pressed ? 0.9 : 1,
-                  width: 200,
-                  height: 200,
-                  borderRadius: 100,
+                  width: 160,
+                  height: 160,
+                  borderRadius: 32,
                   backgroundColor: colors.primary,
                   justifyContent: "center",
                   alignItems: "center",
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 8,
-                  elevation: 8,
+                  marginBottom: 24,
                 },
               ]}
             >
-              <Text style={{ fontSize: 64, marginBottom: 8 }}>📸</Text>
-              <Text className="text-white text-lg font-semibold">사진 선택</Text>
+              <Text style={{ fontSize: 64, color: "white" }}>+</Text>
             </Pressable>
-          </View>
 
-          {/* Instructions */}
-          <View className="items-center mb-8">
-            <Text className="text-base text-muted text-center leading-relaxed">
-              고객의 헤어 스타일 사진을 선택하여{"\n"}
-              얼굴만 안전하게 교체하세요
+            <Text className="text-xl font-semibold text-foreground mb-2">
+              새 프로젝트 시작
+            </Text>
+            <Text className="text-sm text-muted text-center">
+              사진을 선택하여{"\n"}얼굴 교체 작업을 시작하세요
             </Text>
           </View>
 
           {/* Recent Projects Section */}
           <View className="w-full">
             <Text className="text-lg font-semibold text-foreground mb-4">
-              최근 작업
+              최근 작업물
             </Text>
-            <View className="bg-surface rounded-2xl p-6 items-center">
-              <Text className="text-muted text-center">
-                아직 작업 내역이 없습니다
+            <View className="bg-surface rounded-2xl p-8 items-center">
+              <Text className="text-muted text-center text-base">
+                아직 작업물이 없습니다{"\n"}새 프로젝트를 시작해보세요
               </Text>
             </View>
           </View>

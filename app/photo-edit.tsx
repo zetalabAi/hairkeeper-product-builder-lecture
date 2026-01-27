@@ -6,10 +6,22 @@ import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
 
 type Nationality = "korea" | "japan";
-type Gender = "male" | "female";
+type Gender = "female" | "male";
 
-const FEMALE_STYLES = ["청순", "귀여움", "아름다움", "도도", "섹시"];
-const MALE_STYLES = ["늠름", "섹시", "남성적", "강한 인상"];
+const FEMALE_STYLES = [
+  { id: "청순", label: "청순", icon: "🌸" },
+  { id: "귀여움", label: "귀여움", icon: "🐰" },
+  { id: "아름다움", label: "아름다움", icon: "✨" },
+  { id: "도도", label: "도도", icon: "👑" },
+  { id: "섹시", label: "섹시", icon: "💋" },
+];
+
+const MALE_STYLES = [
+  { id: "늠름", label: "늠름", icon: "🦁" },
+  { id: "섹시", label: "섹시", icon: "🔥" },
+  { id: "남성적", label: "남성적", icon: "💪" },
+  { id: "강한 인상", label: "강한 인상", icon: "⚡" },
+];
 
 export default function PhotoEditScreen() {
   const params = useLocalSearchParams();
@@ -29,7 +41,7 @@ export default function PhotoEditScreen() {
 
   const handleNext = () => {
     if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
 
     if (!nationality || !gender || !style) return;
@@ -71,28 +83,33 @@ export default function PhotoEditScreen() {
   const availableStyles = gender === "female" ? FEMALE_STYLES : MALE_STYLES;
 
   return (
-    <ScreenContainer>
+    <ScreenContainer className="bg-background">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-6 py-4">
+      <View className="flex-row items-center px-6 py-4">
         <Pressable
           onPress={handleBack}
           style={({ pressed }) => [
             {
               opacity: pressed ? 0.6 : 1,
+              marginRight: 16,
             },
           ]}
         >
-          <Text className="text-base text-primary">취소</Text>
+          <Text className="text-base text-primary">{"<>"}</Text>
         </Pressable>
-        <Text className="text-lg font-semibold text-foreground">옵션 선택</Text>
-        <View style={{ width: 40 }} />
+        <Text className="text-lg font-semibold text-foreground">스타일 선택</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View className="px-6 py-4">
+          {/* Info */}
+          <Text className="text-sm text-muted text-center mb-8">
+            원하는 얼굴 스타일을 선택하세요
+          </Text>
+
           {/* Preview Image */}
           <View className="items-center mb-8">
-            <View className="w-full aspect-square rounded-2xl overflow-hidden bg-surface">
+            <View className="w-32 h-32 rounded-2xl overflow-hidden bg-surface">
               {imageUri ? (
                 <Image
                   source={{ uri: imageUri }}
@@ -109,7 +126,7 @@ export default function PhotoEditScreen() {
 
           {/* Step 1: Nationality */}
           <View className="mb-8">
-            <Text className="text-lg font-semibold text-foreground mb-4">
+            <Text className="text-base font-semibold text-foreground mb-4">
               1. 국적 선택
             </Text>
             <View className="flex-row gap-3">
@@ -123,7 +140,7 @@ export default function PhotoEditScreen() {
                     borderColor:
                       nationality === "korea" ? colors.primary : colors.border,
                     backgroundColor:
-                      nationality === "korea" ? `${colors.primary}20` : colors.surface,
+                      nationality === "korea" ? `${colors.primary}30` : colors.surface,
                   },
                 ]}
                 className="py-4 rounded-xl items-center"
@@ -146,7 +163,7 @@ export default function PhotoEditScreen() {
                     borderColor:
                       nationality === "japan" ? colors.primary : colors.border,
                     backgroundColor:
-                      nationality === "japan" ? `${colors.primary}20` : colors.surface,
+                      nationality === "japan" ? `${colors.primary}30` : colors.surface,
                   },
                 ]}
                 className="py-4 rounded-xl items-center"
@@ -164,7 +181,7 @@ export default function PhotoEditScreen() {
 
           {/* Step 2: Gender */}
           <View className="mb-8">
-            <Text className="text-lg font-semibold text-foreground mb-4">
+            <Text className="text-base font-semibold text-foreground mb-4">
               2. 성별 선택
             </Text>
             <View className="flex-row gap-3">
@@ -177,7 +194,7 @@ export default function PhotoEditScreen() {
                     borderWidth: 2,
                     borderColor: gender === "female" ? colors.primary : colors.border,
                     backgroundColor:
-                      gender === "female" ? `${colors.primary}20` : colors.surface,
+                      gender === "female" ? `${colors.primary}30` : colors.surface,
                   },
                 ]}
                 className="py-4 rounded-xl items-center"
@@ -199,7 +216,7 @@ export default function PhotoEditScreen() {
                     borderWidth: 2,
                     borderColor: gender === "male" ? colors.primary : colors.border,
                     backgroundColor:
-                      gender === "male" ? `${colors.primary}20` : colors.surface,
+                      gender === "male" ? `${colors.primary}30` : colors.surface,
                   },
                 ]}
                 className="py-4 rounded-xl items-center"
@@ -215,40 +232,55 @@ export default function PhotoEditScreen() {
             </View>
           </View>
 
-          {/* Step 3: Style */}
+          {/* Step 3: Style Grid */}
           {gender && (
             <View className="mb-8">
-              <Text className="text-lg font-semibold text-foreground mb-4">
+              <Text className="text-base font-semibold text-foreground mb-4">
                 3. 스타일 선택
               </Text>
               <View className="flex-row flex-wrap gap-3">
                 {availableStyles.map((s) => (
                   <Pressable
-                    key={s}
-                    onPress={() => handleSelectStyle(s)}
+                    key={s.id}
+                    onPress={() => handleSelectStyle(s.id)}
                     style={({ pressed }) => [
                       {
+                        width: "48%",
                         opacity: pressed ? 0.7 : 1,
                         borderWidth: 2,
-                        borderColor: style === s ? colors.primary : colors.border,
+                        borderColor: style === s.id ? colors.primary : colors.border,
                         backgroundColor:
-                          style === s ? `${colors.primary}20` : colors.surface,
-                        minWidth: 100,
+                          style === s.id ? `${colors.primary}30` : colors.surface,
                       },
                     ]}
-                    className="px-6 py-3 rounded-xl items-center"
+                    className="py-6 rounded-xl items-center"
                   >
+                    <View className="w-16 h-16 rounded-full bg-surface items-center justify-center mb-3">
+                      <Text style={{ fontSize: 32 }}>{s.icon}</Text>
+                    </View>
                     <Text
                       className={`text-base font-semibold ${
-                        style === s ? "text-primary" : "text-foreground"
+                        style === s.id ? "text-primary" : "text-foreground"
                       }`}
                     >
-                      {s}
+                      {s.label}
                     </Text>
+                    {style === s.id && (
+                      <View className="absolute top-2 right-2">
+                        <Text style={{ fontSize: 16 }}>✓</Text>
+                      </View>
+                    )}
                   </Pressable>
                 ))}
               </View>
             </View>
+          )}
+
+          {/* Bottom Info */}
+          {gender && (
+            <Text className="text-xs text-muted text-center mb-4">
+              선택한 스타일에 맞는 얼굴 풀에서 추천됩니다
+            </Text>
           )}
         </View>
       </ScrollView>
@@ -267,7 +299,9 @@ export default function PhotoEditScreen() {
           ]}
           className="py-4 rounded-full items-center"
         >
-          <Text className="text-white text-lg font-semibold">다음</Text>
+          <Text className="text-white text-lg font-semibold">
+            {isComplete ? "얼굴 추천받기" : "모든 옵션을 선택하세요"}
+          </Text>
         </Pressable>
       </View>
     </ScreenContainer>
