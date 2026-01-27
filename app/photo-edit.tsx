@@ -1,27 +1,42 @@
-import { useState } from "react";
-import { View, Text, Pressable, Platform, ScrollView, Image } from "react-native";
+import { View, Text, ScrollView, Pressable, Platform } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
-import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
+import { Button } from "@/components/ui/button";
+import * as Haptics from "expo-haptics";
+import { useState } from "react";
 
-type Nationality = "korea" | "japan";
-type Gender = "female" | "male";
+type Nationality = "korean" | "western" | "southeast_asian";
+type Gender = "male" | "female";
 
-const FEMALE_STYLES = [
-  { id: "청순", label: "청순" },
-  { id: "귀여움", label: "귀여움" },
-  { id: "아름다움", label: "아름다움" },
-  { id: "도도", label: "도도" },
-  { id: "섹시", label: "섹시" },
+const NATIONALITIES: { value: Nationality; label: string }[] = [
+  { value: "korean", label: "한국인" },
+  { value: "western", label: "서양인" },
+  { value: "southeast_asian", label: "동남아시아인" },
+];
+
+const GENDERS: { value: Gender; label: string }[] = [
+  { value: "male", label: "남성" },
+  { value: "female", label: "여성" },
 ];
 
 const MALE_STYLES = [
-  { id: "늠름", label: "늠름" },
-  { id: "섹시", label: "섹시" },
-  { id: "남성적", label: "남성적" },
-  { id: "강한 인상", label: "강한 인상" },
+  "자연스러운",
+  "단정한",
+  "세련된",
+  "카리스마",
+  "부드러운",
+  "지적인",
+];
+
+const FEMALE_STYLES = [
+  "자연스러운",
+  "우아한",
+  "발랄한",
+  "시크한",
+  "부드러운",
+  "세련된",
 ];
 
 export default function PhotoEditScreen() {
@@ -34,18 +49,15 @@ export default function PhotoEditScreen() {
   const [style, setStyle] = useState<string | null>(null);
 
   const handleBack = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
     router.back();
   };
 
   const handleNext = () => {
-    if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
-
     if (!nationality || !gender || !style) return;
+
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
 
     router.push({
       pathname: "/face-select" as any,
@@ -89,12 +101,10 @@ export default function PhotoEditScreen() {
       <View className="flex-row items-center px-6 py-4">
         <Pressable
           onPress={handleBack}
-          style={({ pressed }) => [
-            {
-              opacity: pressed ? 0.6 : 1,
-              marginRight: 16,
-            },
-          ]}
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.6 : 1,
+            marginRight: 16,
+          })}
         >
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </Pressable>
@@ -108,200 +118,171 @@ export default function PhotoEditScreen() {
             원하는 얼굴 스타일을 선택하세요
           </Text>
 
-          {/* Preview Image */}
-          <View className="items-center mb-8">
-            <View className="w-32 h-32 rounded-2xl overflow-hidden bg-surface">
-              {imageUri ? (
-                <Image
-                  source={{ uri: imageUri }}
-                  style={{ width: "100%", height: "100%" }}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View className="flex-1 items-center justify-center">
-                  <Text className="text-muted">이미지 없음</Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* Step 1: Nationality */}
+          {/* Nationality Selection */}
           <View className="mb-8">
-            <Text className="text-base font-semibold text-foreground mb-4">
-              1. 국적 선택
+            <Text className="text-base font-semibold text-foreground mb-3">
+              국적
             </Text>
-            <View className="flex-row gap-3">
-              <Pressable
-                onPress={() => handleSelectNationality("korea")}
-                style={({ pressed }) => [
-                  {
-                    flex: 1,
-                    opacity: pressed ? 0.7 : 1,
-                    borderWidth: 2,
-                    borderColor:
-                      nationality === "korea" ? colors.primary : colors.border,
-                    backgroundColor:
-                      nationality === "korea" ? `${colors.primary}30` : colors.surface,
-                  },
-                ]}
-                className="py-4 rounded-xl items-center"
-              >
-                <Text
-                  className={`text-base font-semibold ${
-                    nationality === "korea" ? "text-primary" : "text-foreground"
-                  }`}
-                >
-                  한국
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => handleSelectNationality("japan")}
-                style={({ pressed }) => [
-                  {
-                    flex: 1,
-                    opacity: pressed ? 0.7 : 1,
-                    borderWidth: 2,
-                    borderColor:
-                      nationality === "japan" ? colors.primary : colors.border,
-                    backgroundColor:
-                      nationality === "japan" ? `${colors.primary}30` : colors.surface,
-                  },
-                ]}
-                className="py-4 rounded-xl items-center"
-              >
-                <Text
-                  className={`text-base font-semibold ${
-                    nationality === "japan" ? "text-primary" : "text-foreground"
-                  }`}
-                >
-                  일본
-                </Text>
-              </Pressable>
+            <View
+              style={{
+                backgroundColor: colors.surface,
+                borderRadius: 20,
+                padding: 4,
+                flexDirection: "row",
+                shadowColor: "#000",
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 2 },
+                elevation: 2,
+              }}
+            >
+              {NATIONALITIES.map((item) => {
+                const isSelected = nationality === item.value;
+                return (
+                  <Pressable
+                    key={item.value}
+                    onPress={() => handleSelectNationality(item.value)}
+                    style={({ pressed }) => ({
+                      flex: 1,
+                      paddingVertical: 12,
+                      borderRadius: 16,
+                      backgroundColor: isSelected ? colors.primary : "transparent",
+                      opacity: pressed ? 0.85 : 1,
+                      transform: [{ translateY: pressed ? 1 : 0 }],
+                    })}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: isSelected ? "#FFFFFF" : colors.foreground,
+                        textAlign: "center",
+                      }}
+                    >
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 
-          {/* Step 2: Gender */}
+          {/* Gender Selection */}
           <View className="mb-8">
-            <Text className="text-base font-semibold text-foreground mb-4">
-              2. 성별 선택
+            <Text className="text-base font-semibold text-foreground mb-3">
+              성별
             </Text>
-            <View className="flex-row gap-3">
-              <Pressable
-                onPress={() => handleSelectGender("female")}
-                style={({ pressed }) => [
-                  {
-                    flex: 1,
-                    opacity: pressed ? 0.7 : 1,
-                    borderWidth: 2,
-                    borderColor: gender === "female" ? colors.primary : colors.border,
-                    backgroundColor:
-                      gender === "female" ? `${colors.primary}30` : colors.surface,
-                  },
-                ]}
-                className="py-4 rounded-xl items-center"
-              >
-                <Text
-                  className={`text-base font-semibold ${
-                    gender === "female" ? "text-primary" : "text-foreground"
-                  }`}
-                >
-                  여성
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => handleSelectGender("male")}
-                style={({ pressed }) => [
-                  {
-                    flex: 1,
-                    opacity: pressed ? 0.7 : 1,
-                    borderWidth: 2,
-                    borderColor: gender === "male" ? colors.primary : colors.border,
-                    backgroundColor:
-                      gender === "male" ? `${colors.primary}30` : colors.surface,
-                  },
-                ]}
-                className="py-4 rounded-xl items-center"
-              >
-                <Text
-                  className={`text-base font-semibold ${
-                    gender === "male" ? "text-primary" : "text-foreground"
-                  }`}
-                >
-                  남성
-                </Text>
-              </Pressable>
+            <View
+              style={{
+                backgroundColor: colors.surface,
+                borderRadius: 20,
+                padding: 4,
+                flexDirection: "row",
+                shadowColor: "#000",
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 2 },
+                elevation: 2,
+              }}
+            >
+              {GENDERS.map((item) => {
+                const isSelected = gender === item.value;
+                return (
+                  <Pressable
+                    key={item.value}
+                    onPress={() => handleSelectGender(item.value)}
+                    style={({ pressed }) => ({
+                      flex: 1,
+                      paddingVertical: 12,
+                      borderRadius: 16,
+                      backgroundColor: isSelected ? colors.primary : "transparent",
+                      opacity: pressed ? 0.85 : 1,
+                      transform: [{ translateY: pressed ? 1 : 0 }],
+                    })}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: isSelected ? "#FFFFFF" : colors.foreground,
+                        textAlign: "center",
+                      }}
+                    >
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 
-          {/* Step 3: Style Grid */}
+          {/* Style Selection */}
           {gender && (
             <View className="mb-8">
-              <Text className="text-base font-semibold text-foreground mb-4">
-                3. 스타일 선택
+              <Text className="text-base font-semibold text-foreground mb-3">
+                스타일
               </Text>
-              <View className="flex-row flex-wrap gap-3">
-                {availableStyles.map((s) => (
-                  <Pressable
-                    key={s.id}
-                    onPress={() => handleSelectStyle(s.id)}
-                    style={({ pressed }) => [
-                      {
-                        width: "48%",
-                        opacity: pressed ? 0.7 : 1,
-                        borderWidth: 2,
-                        borderColor: style === s.id ? colors.primary : colors.border,
-                        backgroundColor:
-                          style === s.id ? `${colors.primary}30` : colors.surface,
-                      },
-                    ]}
-                    className="py-6 rounded-xl items-center"
-                  >
-
-                    <Text
-                      className={`text-base font-semibold ${
-                        style === s.id ? "text-primary" : "text-foreground"
-                      }`}
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {availableStyles.map((item) => {
+                  const isSelected = style === item;
+                  return (
+                    <Pressable
+                      key={item}
+                      onPress={() => handleSelectStyle(item)}
+                      style={({ pressed }) => ({
+                        paddingVertical: 12,
+                        paddingHorizontal: 20,
+                        borderRadius: 16,
+                        backgroundColor: isSelected
+                          ? colors.primary
+                          : colors.surface,
+                        shadowColor: "#000",
+                        shadowOpacity: isSelected ? 0.12 : 0.05,
+                        shadowRadius: isSelected ? 10 : 6,
+                        shadowOffset: { width: 0, height: isSelected ? 3 : 2 },
+                        elevation: isSelected ? 3 : 1,
+                        opacity: pressed ? 0.85 : 1,
+                        transform: [{ translateY: pressed ? 1 : 0 }],
+                      })}
                     >
-                      {s.label}
-                    </Text>
-                    {style === s.id && (
-                      <View className="absolute top-2 right-2">
-                        <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
-                      </View>
-                    )}
-                  </Pressable>
-                ))}
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: "600",
+                          color: isSelected ? "#FFFFFF" : colors.foreground,
+                        }}
+                      >
+                        {item}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             </View>
-          )}
-
-          {/* Bottom Info */}
-          {gender && (
-            <Text className="text-xs text-muted text-center mb-4">
-              선택한 스타일에 맞는 얼굴 풀에서 추천됩니다
-            </Text>
           )}
         </View>
       </ScrollView>
 
-      {/* Bottom Button */}
-      <View className="px-6 pb-8">
-        <Pressable
-          onPress={handleNext}
+      {/* CTA Button */}
+      <View
+        style={{
+          padding: 24,
+          paddingBottom: Platform.OS === "ios" ? 34 : 24,
+          backgroundColor: colors.background,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+        }}
+      >
+        <Button
+          label="다음"
+          variant="primary"
+          size="large"
+          fullWidth
           disabled={!isComplete}
-          style={({ pressed }) => [
-            {
-              transform: [{ scale: pressed && isComplete ? 0.97 : 1 }],
-              opacity: !isComplete ? 0.5 : pressed ? 0.9 : 1,
-              backgroundColor: colors.primary,
-            },
-          ]}
-          className="py-4 rounded-full items-center"
-        >
-          <Text className="text-white text-lg font-semibold">
-            {isComplete ? "얼굴 추천받기" : "모든 옵션을 선택하세요"}
-          </Text>
-        </Pressable>
+          onPress={handleNext}
+          icon="arrow-forward"
+          iconPosition="right"
+        />
       </View>
     </ScreenContainer>
   );

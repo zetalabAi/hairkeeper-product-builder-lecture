@@ -1,38 +1,46 @@
-import { useState } from "react";
-import { View, Text, Pressable, Platform, Image, Alert, Dimensions, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { View, Text, Pressable, Platform, Animated } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
+import { useColors } from "@/hooks/use-colors";
+import { Ionicons } from "@expo/vector-icons";
+import { Button } from "@/components/ui/button";
 import * as Haptics from "expo-haptics";
 import * as Sharing from "expo-sharing";
-import { useColors } from "@/hooks/use-colors";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  runOnJS,
-} from "react-native-reanimated";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const IMAGE_WIDTH = SCREEN_WIDTH - 48;
+import { useState, useRef } from "react";
 
 export default function ResultScreen() {
   const params = useLocalSearchParams();
   const imageUri = params.imageUri as string;
   const faceUrl = params.faceUrl as string;
-  const nationality = params.nationality as string;
-  const gender = params.gender as string;
-  const style = params.style as string;
   const colors = useColors();
 
-  const sliderPosition = useSharedValue(IMAGE_WIDTH / 2);
+  const [showBefore, setShowBefore] = useState(false);
+  const sliderPosition = useRef(new Animated.Value(0)).current;
 
   const handleBack = () => {
+    router.back();
+  };
+
+  const handleToggle = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    router.back();
+
+    const newValue = showBefore ? 0 : 1;
+    setShowBefore(!showBefore);
+
+    Animated.timing(sliderPosition, {
+      toValue: newValue,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleSave = async () => {
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    alert("결과 이미지가 갤러리에 저장되었습니다!");
   };
 
   const handleShare = async () => {
@@ -40,68 +48,20 @@ export default function ResultScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    try {
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (!isAvailable) {
-        Alert.alert("공유 불가", "이 기기에서는 공유 기능을 사용할 수 없습니다.");
-        return;
-      }
-
-      await Sharing.shareAsync(imageUri, {
-        mimeType: "image/jpeg",
-        dialogTitle: "머리보존 AI 결과 공유",
-      });
-    } catch (error) {
-      console.error("Share error:", error);
-      Alert.alert("오류", "공유 중 오류가 발생했습니다.");
+    const isAvailable = await Sharing.isAvailableAsync();
+    if (isAvailable) {
+      await Sharing.shareAsync(faceUrl);
+    } else {
+      alert("공유 기능을 사용할 수 없습니다.");
     }
   };
 
-  const handleSave = () => {
+  const handleNewProject = () => {
     if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-
-    Alert.alert(
-      "저장 완료",
-      "이미지가 갤러리에 저장되었습니다.",
-      [
-        {
-          text: "확인",
-          onPress: () => router.replace("/(tabs)" as any),
-        },
-      ]
-    );
+    router.push("/(tabs)" as any);
   };
-
-  const handleHome = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    router.replace("/(tabs)" as any);
-  };
-
-  const panGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      const newPosition = Math.max(0, Math.min(IMAGE_WIDTH, event.x));
-      sliderPosition.value = newPosition;
-    })
-    .onEnd(() => {
-      // Optional: snap to center or edges
-    })
-    .runOnJS(true);
-
-  const maskStyle = useAnimatedStyle(() => {
-    return {
-      width: sliderPosition.value,
-    };
-  });
-
-  const handleStyle = useAnimatedStyle(() => {
-    return {
-      left: sliderPosition.value - 20,
-    };
-  });
 
   return (
     <ScreenContainer className="bg-background">
@@ -109,179 +69,114 @@ export default function ResultScreen() {
       <View className="flex-row items-center px-6 py-4">
         <Pressable
           onPress={handleBack}
-          style={({ pressed }) => [
-            {
-              opacity: pressed ? 0.6 : 1,
-              marginRight: 16,
-            },
-          ]}
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.6 : 1,
+            marginRight: 16,
+          })}
         >
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </Pressable>
         <Text className="text-lg font-semibold text-foreground">결과 확인</Text>
       </View>
 
-      {/* Result Image with Slider */}
-      <View className="flex-1 items-center justify-center px-6">
+      {/* Content */}
+      <View className="flex-1 justify-center px-6">
+        {/* Image Preview */}
         <View
           style={{
-            width: IMAGE_WIDTH,
-            aspectRatio: 1,
+            aspectRatio: 3 / 4,
             borderRadius: 24,
-            overflow: "hidden",
             backgroundColor: colors.surface,
-            position: "relative",
+            marginBottom: 24,
+            overflow: "hidden",
+            shadowColor: "#000",
+            shadowOpacity: 0.15,
+            shadowRadius: 20,
+            shadowOffset: { width: 0, height: 8 },
+            elevation: 8,
           }}
         >
-          {/* Base Image (Result) */}
-          <Image
-            source={{ uri: faceUrl }}
-            style={StyleSheet.absoluteFill}
-            resizeMode="cover"
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors.muted + "30",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="image" size={64} color={colors.muted} />
+          </View>
+        </View>
+
+        {/* Toggle Button */}
+        <Pressable
+          onPress={handleToggle}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: 12,
+            paddingHorizontal: 20,
+            borderRadius: 20,
+            backgroundColor: colors.surface,
+            marginBottom: 24,
+            alignSelf: "center",
+            shadowColor: "#000",
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
+            elevation: 2,
+            opacity: pressed ? 0.85 : 1,
+            transform: [{ translateY: pressed ? 1 : 0 }],
+          })}
+        >
+          <Ionicons
+            name="swap-horizontal"
+            size={20}
+            color={colors.primary}
+            style={{ marginRight: 8 }}
           />
+          <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
+            {showBefore ? "After 보기" : "Before 보기"}
+          </Text>
+        </Pressable>
 
-          {/* Masked Original Image */}
-          <Animated.View
-            style={[
-              StyleSheet.absoluteFill,
-              maskStyle,
-              { overflow: "hidden" },
-            ]}
-          >
-            <Image
-              source={{ uri: imageUri }}
-              style={{
-                width: IMAGE_WIDTH,
-                height: IMAGE_WIDTH,
-              }}
-              resizeMode="cover"
-            />
-          </Animated.View>
-
-          {/* Slider Line and Handle */}
-          <GestureDetector gesture={panGesture}>
-            <Animated.View
-              style={[
-                {
-                  position: "absolute",
-                  top: 0,
-                  bottom: 0,
-                  width: 40,
-                  alignItems: "center",
-                  justifyContent: "center",
-                },
-                handleStyle,
-              ]}
-            >
-              {/* Vertical Line */}
-              <View
-                style={{
-                  width: 3,
-                  height: "100%",
-                  backgroundColor: colors.primary,
-                }}
+        {/* Action Buttons */}
+        <View style={{ gap: 12 }}>
+          <Button
+            label="갤러리에 저장"
+            variant="primary"
+            size="large"
+            fullWidth
+            icon="download"
+            iconPosition="left"
+            onPress={handleSave}
+          />
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Button
+                label="공유하기"
+                variant="secondary"
+                size="medium"
+                fullWidth
+                icon="share-social"
+                iconPosition="left"
+                onPress={handleShare}
               />
-              {/* Handle */}
-              <View
-                style={{
-                  position: "absolute",
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: colors.primary,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderWidth: 3,
-                  borderColor: "white",
-                }}
-              >
-                <Ionicons name="swap-horizontal" size={20} color="white" />
-              </View>
-            </Animated.View>
-          </GestureDetector>
-
-          {/* Labels */}
-          <View
-            style={{
-              position: "absolute",
-              bottom: 16,
-              left: 16,
-              backgroundColor: "rgba(0,0,0,0.6)",
-              paddingHorizontal: 12,
-              paddingVertical: 6,
-              borderRadius: 8,
-            }}
-          >
-            <Text className="text-white text-xs font-semibold">
-              원본 이미지
-            </Text>
-          </View>
-          <View
-            style={{
-              position: "absolute",
-              bottom: 16,
-              right: 16,
-              backgroundColor: "rgba(0,0,0,0.6)",
-              paddingHorizontal: 12,
-              paddingVertical: 6,
-              borderRadius: 8,
-            }}
-          >
-            <Text className="text-white text-xs font-semibold">
-              합성 결과
-            </Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                label="새 프로젝트"
+                variant="secondary"
+                size="medium"
+                fullWidth
+                icon="add"
+                iconPosition="left"
+                onPress={handleNewProject}
+              />
+            </View>
           </View>
         </View>
-
-        {/* Info */}
-        <Text className="text-sm text-muted text-center mt-6">
-          좌우로 드래그하여 원본과 결과를 비교하세요
-        </Text>
-
-        {/* Check Message */}
-        <View className="flex-row items-center mt-4 gap-2">
-          <Ionicons name="checkmark-circle" size={18} color={colors.success} />
-          <Text className="text-success text-sm font-semibold">
-            머리는 절대 변형되지 않았습니다
-          </Text>
-        </View>
-
-        <View className="mt-4">
-          <Text className="text-sm text-muted text-center">
-            옵션: {nationality === "korea" ? "한국" : "일본"} · {gender === "female" ? "여성" : "남성"} · {style}
-          </Text>
-        </View>
-      </View>
-
-      {/* Action Buttons */}
-      <View className="px-6 pb-8 gap-3">
-        {/* Save Button */}
-        <Pressable
-          onPress={handleSave}
-          style={({ pressed }) => [
-            {
-              transform: [{ scale: pressed ? 0.97 : 1 }],
-              opacity: pressed ? 0.9 : 1,
-              backgroundColor: colors.primary,
-            },
-          ]}
-          className="py-4 rounded-full items-center"
-        >
-          <Text className="text-white text-lg font-semibold">저장하기</Text>
-        </Pressable>
-
-        {/* Share Button */}
-        <Pressable
-          onPress={handleShare}
-          style={({ pressed }) => [
-            {
-              opacity: pressed ? 0.6 : 1,
-            },
-          ]}
-          className="py-3 items-center"
-        >
-          <Text className="text-muted text-base">공유하기</Text>
-        </Pressable>
       </View>
     </ScreenContainer>
   );

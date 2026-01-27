@@ -1,16 +1,16 @@
-import { useState } from "react";
-import { View, Text, Pressable, Platform, ScrollView, Image, FlatList } from "react-native";
+import { View, Text, FlatList, Pressable, Platform } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
-import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
+import { Button } from "@/components/ui/button";
+import * as Haptics from "expo-haptics";
+import { useState } from "react";
 
-// 테스트용 더미 얼굴 데이터 (실제로는 서버에서 가져옴)
+// Dummy face data
 const DUMMY_FACES = Array.from({ length: 12 }, (_, i) => ({
   id: `face-${i + 1}`,
-  url: `https://i.pravatar.cc/300?img=${i + 1}`,
-  similarity: Math.floor(Math.random() * 30) + 70, // 70-100% 유사도
+  url: `https://i.pravatar.cc/300?img=${i + 10}`,
 }));
 
 export default function FaceSelectScreen() {
@@ -24,9 +24,6 @@ export default function FaceSelectScreen() {
   const [selectedFaceId, setSelectedFaceId] = useState<string | null>(null);
 
   const handleBack = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
     router.back();
   };
 
@@ -38,11 +35,11 @@ export default function FaceSelectScreen() {
   };
 
   const handleNext = () => {
+    if (!selectedFaceId) return;
+
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-
-    if (!selectedFaceId) return;
 
     const selectedFace = DUMMY_FACES.find((f) => f.id === selectedFaceId);
 
@@ -64,56 +61,43 @@ export default function FaceSelectScreen() {
     return (
       <Pressable
         onPress={() => handleSelectFace(item.id)}
-        style={({ pressed }) => [
-          {
-            width: "48%",
-            aspectRatio: 1,
-            marginBottom: 12,
-            opacity: pressed ? 0.7 : 1,
-            borderWidth: 3,
-            borderColor: isSelected ? colors.primary : "transparent",
-            borderRadius: 16,
-            overflow: "hidden",
-          },
-        ]}
+        style={({ pressed }) => ({
+          width: "48%",
+          aspectRatio: 1,
+          marginBottom: 12,
+          borderRadius: 20,
+          overflow: "hidden",
+          backgroundColor: colors.surface,
+          shadowColor: "#000",
+          shadowOpacity: isSelected ? 0.15 : 0.08,
+          shadowRadius: isSelected ? 12 : 8,
+          shadowOffset: { width: 0, height: isSelected ? 4 : 2 },
+          elevation: isSelected ? 4 : 2,
+          opacity: pressed ? 0.85 : 1,
+          transform: [{ scale: isSelected ? 1.02 : 1 }, { translateY: pressed ? 1 : 0 }],
+        })}
       >
-        <Image
-          source={{ uri: item.url }}
-          style={{ width: "100%", height: "100%" }}
-          resizeMode="cover"
-        />
-        {/* Similarity Badge */}
-        <View
-          style={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            backgroundColor: "rgba(0,0,0,0.7)",
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            borderRadius: 8,
-          }}
-        >
-          <Text className="text-white text-xs font-semibold">
-            {item.similarity}%
-          </Text>
-        </View>
-        {/* Selection Indicator */}
+        <View style={{ flex: 1, backgroundColor: colors.muted + "30" }} />
         {isSelected && (
           <View
             style={{
               position: "absolute",
-              bottom: 8,
+              top: 8,
               right: 8,
-              width: 28,
-              height: 28,
-              borderRadius: 14,
+              width: 32,
+              height: 32,
+              borderRadius: 16,
               backgroundColor: colors.primary,
-              justifyContent: "center",
               alignItems: "center",
+              justifyContent: "center",
+              shadowColor: "#000",
+              shadowOpacity: 0.2,
+              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: 3,
             }}
           >
-            <Ionicons name="checkmark-circle" size={24} color="white" />
+            <Ionicons name="checkmark" size={20} color="#FFFFFF" />
           </View>
         )}
       </Pressable>
@@ -121,64 +105,64 @@ export default function FaceSelectScreen() {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer className="bg-background">
       {/* Header */}
       <View className="flex-row items-center justify-between px-6 py-4">
         <Pressable
           onPress={handleBack}
-          style={({ pressed }) => [
-            {
-              opacity: pressed ? 0.6 : 1,
-            },
-          ]}
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.6 : 1,
+          })}
         >
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </Pressable>
         <Text className="text-lg font-semibold text-foreground">얼굴 선택</Text>
-        <View style={{ width: 40 }} />
+        <View style={{ width: 24 }} />
       </View>
 
       {/* Info */}
-      <View className="px-6 pb-4">
+      <View className="px-6 mb-4">
         <Text className="text-sm text-muted text-center">
-          선택한 옵션: {nationality === "korea" ? "한국" : "일본"} · {gender === "female" ? "여성" : "남성"} · {style}
-        </Text>
-        <Text className="text-sm text-muted text-center mt-2">
-          AI가 추천하는 얼굴을 선택하세요 (유사도 순)
+          {nationality} · {gender} · {style}
         </Text>
       </View>
 
       {/* Face Grid */}
-      <View className="flex-1 px-6">
-        <FlatList
-          data={DUMMY_FACES}
-          renderItem={renderFaceItem}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={{ justifyContent: "space-between" }}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}
-        />
-      </View>
+      <FlatList
+        data={DUMMY_FACES}
+        renderItem={renderFaceItem}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={{
+          justifyContent: "space-between",
+          paddingHorizontal: 24,
+        }}
+        contentContainerStyle={{
+          paddingTop: 8,
+          paddingBottom: 24,
+        }}
+      />
 
-      {/* Bottom Button */}
-      <View className="px-6 pb-8">
-        <Pressable
-          onPress={handleNext}
+      {/* CTA Button */}
+      <View
+        style={{
+          padding: 24,
+          paddingBottom: Platform.OS === "ios" ? 34 : 24,
+          backgroundColor: colors.background,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+        }}
+      >
+        <Button
+          label="얼굴 합성하기"
+          variant="primary"
+          size="large"
+          fullWidth
           disabled={!selectedFaceId}
-          style={({ pressed }) => [
-            {
-              transform: [{ scale: pressed && selectedFaceId ? 0.97 : 1 }],
-              opacity: !selectedFaceId ? 0.5 : pressed ? 0.9 : 1,
-              backgroundColor: colors.primary,
-            },
-          ]}
-          className="py-4 rounded-full items-center"
-        >
-          <Text className="text-white text-lg font-semibold">
-            {selectedFaceId ? "합성하기" : "얼굴을 선택하세요"}
-          </Text>
-        </Pressable>
+          onPress={handleNext}
+          icon="flash"
+          iconPosition="left"
+        />
       </View>
     </ScreenContainer>
   );
