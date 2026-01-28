@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Platform, Animated } from "react-native";
+import { View, Text, Pressable, Platform, Animated, Image } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { SubScreenHeader } from "@/components/sub-screen-header";
@@ -11,8 +11,9 @@ import { useState, useRef } from "react";
 
 export default function ResultScreen() {
   const params = useLocalSearchParams();
-  const imageUri = params.imageUri as string;
-  const faceUrl = params.faceUrl as string;
+  const originalImageUri = params.originalImageUri as string;
+  const resultImageUri = params.resultImageUri as string;
+  const description = params.description as string;
   const colors = useColors();
 
   const [showBefore, setShowBefore] = useState(false);
@@ -47,7 +48,7 @@ export default function ResultScreen() {
 
     const isAvailable = await Sharing.isAvailableAsync();
     if (isAvailable) {
-      await Sharing.shareAsync(faceUrl);
+      await Sharing.shareAsync(resultImageUri);
     } else {
       alert("공유 기능을 사용할 수 없습니다.");
     }
@@ -82,15 +83,32 @@ export default function ResultScreen() {
             elevation: 8,
           }}
         >
+          <Image
+            source={{ uri: showBefore ? originalImageUri : resultImageUri }}
+            style={{ width: "100%", height: "100%" }}
+            resizeMode="cover"
+          />
+          {/* Label Badge */}
           <View
             style={{
-              flex: 1,
-              backgroundColor: colors.muted + "30",
-              alignItems: "center",
-              justifyContent: "center",
+              position: "absolute",
+              top: 16,
+              left: 16,
+              backgroundColor: showBefore ? colors.muted : colors.primary,
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 12,
             }}
           >
-            <Ionicons name="image" size={64} color={colors.muted} />
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: "700",
+                color: "#FFFFFF",
+              }}
+            >
+              {showBefore ? "Before" : "After"}
+            </Text>
           </View>
         </View>
 
