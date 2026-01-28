@@ -8,13 +8,11 @@ import { Button } from "@/components/ui/button";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
 
-type Nationality = "korean" | "western" | "southeast_asian";
+type Nationality = "korean";
 type Gender = "male" | "female";
 
 const NATIONALITIES: { value: Nationality; label: string }[] = [
   { value: "korean", label: "한국인" },
-  { value: "western", label: "서양인" },
-  { value: "southeast_asian", label: "동남아시아인" },
 ];
 
 const GENDERS: { value: Gender; label: string }[] = [
@@ -45,7 +43,7 @@ export default function PhotoEditScreen() {
   const imageUri = params.imageUri as string;
   const colors = useColors();
 
-  const [nationality, setNationality] = useState<Nationality | null>(null);
+  const [nationality, setNationality] = useState<Nationality | null>("korean");
   const [gender, setGender] = useState<Gender | null>(null);
   const [style, setStyle] = useState<string | null>(null);
 
@@ -104,54 +102,7 @@ export default function PhotoEditScreen() {
             원하는 얼굴 스타일을 선택하세요
           </Text>
 
-          {/* Nationality Selection */}
-          <View className="mb-8">
-            <Text className="text-base font-semibold text-foreground mb-3">
-              국적
-            </Text>
-            <View
-              style={{
-                backgroundColor: colors.surface,
-                borderRadius: 20,
-                padding: 4,
-                flexDirection: "row",
-                shadowColor: "#000",
-                shadowOpacity: 0.05,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 2 },
-                elevation: 2,
-              }}
-            >
-              {NATIONALITIES.map((item) => {
-                const isSelected = nationality === item.value;
-                return (
-                  <Pressable
-                    key={item.value}
-                    onPress={() => handleSelectNationality(item.value)}
-                    style={({ pressed }) => ({
-                      flex: 1,
-                      paddingVertical: 12,
-                      borderRadius: 16,
-                      backgroundColor: isSelected ? colors.primary : "transparent",
-                      opacity: pressed ? 0.85 : 1,
-                      transform: [{ translateY: pressed ? 1 : 0 }],
-                    })}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontWeight: "600",
-                        color: isSelected ? "#FFFFFF" : colors.foreground,
-                        textAlign: "center",
-                      }}
-                    >
-                      {item.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
+          {/* Nationality Selection - Hidden (Korean only) */}
 
           {/* Gender Selection */}
           <View className="mb-8">

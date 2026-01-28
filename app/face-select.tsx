@@ -9,11 +9,25 @@ import * as Haptics from "expo-haptics";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 
-// Dummy face data
-const DUMMY_FACES = Array.from({ length: 12 }, (_, i) => ({
-  id: `face-${i + 1}`,
-  url: `https://i.pravatar.cc/300?img=${i + 10}`,
-}));
+// AI 생성 한국인 얼굴 이미지 (로컬 assets)
+const KOREAN_FACES = {
+  male: [
+    { id: "male-1", source: require("@/assets/faces/korean_male_1.png") },
+    { id: "male-2", source: require("@/assets/faces/korean_male_2.png") },
+    { id: "male-3", source: require("@/assets/faces/korean_male_3.png") },
+    { id: "male-4", source: require("@/assets/faces/korean_male_4.png") },
+    { id: "male-5", source: require("@/assets/faces/korean_male_5.png") },
+    { id: "male-6", source: require("@/assets/faces/korean_male_6.png") },
+  ],
+  female: [
+    { id: "female-1", source: require("@/assets/faces/korean_female_1.png") },
+    { id: "female-2", source: require("@/assets/faces/korean_female_2.png") },
+    { id: "female-3", source: require("@/assets/faces/korean_female_3.png") },
+    { id: "female-4", source: require("@/assets/faces/korean_female_4.png") },
+    { id: "female-5", source: require("@/assets/faces/korean_female_5.png") },
+    { id: "female-6", source: require("@/assets/faces/korean_female_6.png") },
+  ],
+};
 
 export default function FaceSelectScreen() {
   const params = useLocalSearchParams();
@@ -27,6 +41,9 @@ export default function FaceSelectScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const synthesizeMutation = trpc.ai.synthesizeFace.useMutation();
+
+  // 선택된 성별에 맞는 한국인 얼굴 목록
+  const faces = gender === "male" ? KOREAN_FACES.male : KOREAN_FACES.female;
 
   const handleSelectFace = (faceId: string) => {
     if (Platform.OS !== "web") {
@@ -48,7 +65,7 @@ export default function FaceSelectScreen() {
       // Call AI synthesis API
       const result = await synthesizeMutation.mutateAsync({
         originalImageUrl: imageUri,
-        nationality,
+        nationality: "한국인", // 한국인으로 고정
         gender,
         style,
       });
@@ -60,7 +77,7 @@ export default function FaceSelectScreen() {
           originalImageUri: imageUri,
           resultImageUri: result.resultImageUrl,
           description: result.description,
-          nationality,
+          nationality: "한국인",
           gender,
           style,
         },
@@ -122,7 +139,7 @@ export default function FaceSelectScreen() {
             }}
           >
             머리카락과 배경은 그대로 유지하면서{"\n"}
-            얼굴만 자연스럽게 변경하고 있습니다
+            이목구비만 한국 미의 기준에 맞춰 수정합니다
           </Text>
 
           {/* Progress Indicator */}
@@ -184,13 +201,13 @@ export default function FaceSelectScreen() {
               lineHeight: 20,
             }}
           >
-            선택한 스타일: {nationality} {gender} - {style}
+            한국인 {gender === "male" ? "남성" : "여성"} - {style} 스타일
           </Text>
         </View>
 
         {/* Face Grid */}
         <FlatList
-          data={DUMMY_FACES}
+          data={faces}
           keyExtractor={(item) => item.id}
           numColumns={3}
           columnWrapperStyle={{ gap: 12 }}
@@ -202,7 +219,7 @@ export default function FaceSelectScreen() {
                 onPress={() => handleSelectFace(item.id)}
                 style={({ pressed }) => ({
                   flex: 1,
-                  aspectRatio: 1,
+                  aspectRatio: 0.75,
                   borderRadius: 16,
                   overflow: "hidden",
                   borderWidth: isSelected ? 3 : 0,
@@ -211,7 +228,7 @@ export default function FaceSelectScreen() {
                   transform: [{ scale: pressed ? 0.97 : 1 }],
                 })}
               >
-                <Image source={{ uri: item.url }} style={{ width: "100%", height: "100%" }} />
+                <Image source={item.source} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
                 {isSelected && (
                   <View
                     style={{

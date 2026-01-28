@@ -70,14 +70,14 @@ export const appRouter = router({
             {
               role: "system",
               content:
-                "You are a face synthesis expert. Based on the original image and user preferences, describe how the face should be modified while preserving hair and background perfectly. Return JSON with: description (string), preservedElements (array of strings), modifiedElements (array of strings).",
+                "You are a Korean beauty expert specializing in facial feature enhancement. Your task is to describe how to enhance ONLY the facial features (eyes, nose, mouth, eyebrows) according to Korean beauty standards, while PRESERVING the face shape, hair, and background 100%. Korean beauty standards emphasize: clear smooth skin, defined double eyelids, high nose bridge, small V-shaped face, full lips. Return JSON with: description (string), preservedElements (array of strings including 'face shape', 'hair', 'background'), modifiedElements (array of strings for facial features only).",
             },
             {
               role: "user",
               content: [
                 {
                   type: "text",
-                  text: `Generate a face swap description for this image. Target: ${input.nationality} ${input.gender}, Style: ${input.style}. The hair and background must remain 100% unchanged.`,
+                  text: `Analyze this ${input.gender} face and describe how to enhance ONLY the facial features (eyes, nose, mouth, eyebrows) to match Korean beauty standards for ${input.style} style. The face shape, hair, and background MUST remain completely unchanged. Focus on subtle, natural enhancements that respect the original face structure.`,
                 },
                 {
                   type: "image_url",
