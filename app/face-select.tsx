@@ -59,14 +59,28 @@ export default function FaceSelectScreen() {
       const selectedFaceUrl = selectedFace.url;
 
       // Upload original image to S3 if it's a local file
+      console.log("Starting image upload...");
+      console.log("Original imageUri:", imageUri);
       let originalImageUrl = imageUri;
       if (!imageUri.startsWith("http")) {
+        console.log("Uploading local image to S3...");
         const imageData = await prepareImageForUpload(imageUri);
+        console.log("Image data prepared, filename:", imageData.filename);
         const uploadResult = await uploadImageMutation.mutateAsync(imageData);
         originalImageUrl = uploadResult.url;
+        console.log("Image uploaded successfully:", originalImageUrl);
+      } else {
+        console.log("Image is already a URL, skipping upload");
       }
 
       // Call AI synthesis API with selected face
+      console.log("Calling Face Swap API with params:", {
+        originalImageUrl,
+        selectedFaceUrl,
+        nationality: "한국인",
+        gender,
+        style,
+      });
       const result = await synthesizeMutation.mutateAsync({
         originalImageUrl,
         selectedFaceUrl, // 선택한 한국인 얼굴 이미지 URL
@@ -74,6 +88,7 @@ export default function FaceSelectScreen() {
         gender,
         style,
       });
+      console.log("Face Swap API result:", result);
 
       // Navigate to result screen with synthesized image
       router.push({
@@ -87,9 +102,15 @@ export default function FaceSelectScreen() {
           style,
         },
       });
-    } catch (error) {
-      console.error("Face synthesis failed:", error);
-      alert("얼굴 합성에 실패했습니다. 다시 시도해주세요.");
+    } catch (error: any) {
+      console.error("\n========== CLIENT FACE SYNTHESIS ERROR ==========");
+      console.error("Error:", error);
+      console.error("Error message:", error?.message);
+      console.error("Error name:", error?.name);
+      console.error("Error data:", error?.data);
+      console.error("Full error:", JSON.stringify(error, null, 2));
+      console.error("=================================================\n");
+      alert(`얼굴 합성에 실패했습니다.\n오류: ${error?.message || '알 수 없는 오류'}`);
     } finally {
       setIsProcessing(false);
     }

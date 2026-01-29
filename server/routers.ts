@@ -93,13 +93,20 @@ export const appRouter = router({
             modifiedElements: ["eyes", "nose", "mouth", "eyebrows"],
           };
         } catch (error: any) {
-          console.error("Face swap error:", error);
-          console.error("Error details:", {
-            message: error?.message,
-            status: error?.status,
-            response: error?.response,
-            stack: error?.stack,
+          console.error("\n========== FACE SWAP ERROR ==========");
+          console.error("Error message:", error?.message);
+          console.error("Error status:", error?.status);
+          console.error("Error name:", error?.name);
+          console.error("Input params:", {
+            originalImageUrl: input.originalImageUrl,
+            selectedFaceUrl: input.selectedFaceUrl,
+            nationality: input.nationality,
+            gender: input.gender,
+            style: input.style,
           });
+          console.error("Full error object:", JSON.stringify(error, null, 2));
+          console.error("Error stack:", error?.stack);
+          console.error("====================================\n");
           throw new Error(`Failed to swap face: ${error?.message || 'Unknown error'}`);
         }
       }),
