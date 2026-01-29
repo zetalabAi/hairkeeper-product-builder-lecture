@@ -92,9 +92,15 @@ export const appRouter = router({
             preservedElements: ["face shape", "hair", "background"],
             modifiedElements: ["eyes", "nose", "mouth", "eyebrows"],
           };
-        } catch (error) {
+        } catch (error: any) {
           console.error("Face swap error:", error);
-          throw new Error("Failed to swap face. Please try again.");
+          console.error("Error details:", {
+            message: error?.message,
+            status: error?.status,
+            response: error?.response,
+            stack: error?.stack,
+          });
+          throw new Error(`Failed to swap face: ${error?.message || 'Unknown error'}`);
         }
       }),
 

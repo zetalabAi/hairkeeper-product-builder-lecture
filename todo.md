@@ -138,3 +138,11 @@
 - [x] 얼굴 이미지 12개를 S3에 업로드하고 URL 매핑
 - [x] 이미지 업로드 API 추가 (uploadImage)
 - [x] 오류 수정 후 재테스트
+
+## 사용자 보고: Face Swap API 여전히 실패
+- [x] Replicate API 키 확인 (결제 필요 여부) - $10 결제 완료
+- [x] 서버 로그에서 실제 에러 메시지 확인 - 402 Payment Required
+- [x] 테스트 이미지로 직접 API 호출 테스트 - 성공
+- [x] 이미지 URL 접근 가능 여부 확인 - S3 URL 정상
+- [x] Replicate API 파라미터 검증 - 정상
+- [x] 실제 원인 찾아 수정 - 잘못된 API 키 사용, 새 키로 교체 완료
