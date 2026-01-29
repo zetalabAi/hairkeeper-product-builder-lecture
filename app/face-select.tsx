@@ -62,9 +62,18 @@ export default function FaceSelectScreen() {
     setIsProcessing(true);
 
     try {
-      // Call AI synthesis API
+      // Get selected face image
+      const selectedFace = faces.find((f) => f.id === selectedFaceId);
+      if (!selectedFace) return;
+
+      // Convert local image to URL (for now, use a placeholder URL)
+      // In production, upload to S3 and use the S3 URL
+      const selectedFaceUrl = `https://replicate.delivery/pbxt/placeholder-korean-face-${selectedFaceId}.jpg`;
+
+      // Call AI synthesis API with selected face
       const result = await synthesizeMutation.mutateAsync({
         originalImageUrl: imageUri,
+        selectedFaceUrl, // 선택한 한국인 얼굴 이미지 URL
         nationality: "한국인", // 한국인으로 고정
         gender,
         style,

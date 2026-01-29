@@ -1,9 +1,10 @@
 import { useState, useRef } from "react";
-import { View, Text, ScrollView, Dimensions, Pressable, Platform } from "react-native";
+import { View, Text, ScrollView, Dimensions, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useColors } from "@/hooks/use-colors";
 import { router } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
+import { Button } from "@/components/ui/button";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -72,20 +73,18 @@ export default function OnboardingScreen() {
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
       {/* Skip Button */}
       {currentIndex < ONBOARDING_SLIDES.length - 1 && (
-        <Pressable
+        <Button
+          label="건너뛰기"
+          variant="tertiary"
+          size="small"
           onPress={handleSkip}
-          style={({ pressed }) => [
-            {
-              position: "absolute",
-              top: 60,
-              right: 20,
-              zIndex: 10,
-              opacity: pressed ? 0.6 : 1,
-            },
-          ]}
-        >
-          <Text className="text-muted text-base">건너뛰기</Text>
-        </Pressable>
+          style={{
+            position: "absolute",
+            top: 60,
+            right: 20,
+            zIndex: 10,
+          }}
+        />
       )}
 
       {/* Slides */}
@@ -101,50 +100,95 @@ export default function OnboardingScreen() {
         {ONBOARDING_SLIDES.map((slide, index) => (
           <View
             key={index}
-            style={{ width: SCREEN_WIDTH }}
-            className="flex-1 items-center justify-center px-8"
+            style={{
+              width: SCREEN_WIDTH,
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              paddingHorizontal: 40,
+            }}
           >
-            <View style={{ marginBottom: 40 }}>
-              <Ionicons name={slide.icon} size={120} color={colors.primary} />
+            {/* Icon */}
+            <View
+              style={{
+                width: 120,
+                height: 120,
+                borderRadius: 60,
+                backgroundColor: colors.surface,
+                justifyContent: "center",
+                alignItems: "center",
+                marginBottom: 40,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+            >
+              <Ionicons name={slide.icon} size={56} color={colors.primary} />
             </View>
-            <Text className="text-3xl font-bold text-foreground text-center mb-4">
+
+            {/* Title */}
+            <Text
+              style={{
+                fontSize: 28,
+                fontWeight: "700",
+                color: colors.foreground,
+                textAlign: "center",
+                marginBottom: 16,
+                lineHeight: 36,
+              }}
+            >
               {slide.title}
             </Text>
-            <Text className="text-base text-muted text-center leading-relaxed">
+
+            {/* Description */}
+            <Text
+              style={{
+                fontSize: 16,
+                color: colors.muted,
+                textAlign: "center",
+                lineHeight: 24,
+              }}
+            >
               {slide.description}
             </Text>
           </View>
         ))}
       </ScrollView>
 
-      {/* Indicators */}
-      <View className="flex-row items-center justify-center mb-8">
+      {/* Pagination Dots */}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "center",
+          alignItems: "center",
+          marginBottom: 40,
+        }}
+      >
         {ONBOARDING_SLIDES.map((_, index) => (
           <View
             key={index}
-            className={`h-2 rounded-full mx-1 ${
-              index === currentIndex ? "w-8 bg-primary" : "w-2 bg-border"
-            }`}
+            style={{
+              width: currentIndex === index ? 24 : 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: currentIndex === index ? colors.primary : colors.border,
+              marginHorizontal: 4,
+            }}
           />
         ))}
       </View>
 
-      {/* Next/Start Button */}
-      <View className="px-8 pb-8">
-        <Pressable
+      {/* Next Button */}
+      <View style={{ paddingHorizontal: 40, paddingBottom: 40 }}>
+        <Button
+          label={currentIndex < ONBOARDING_SLIDES.length - 1 ? "다음" : "시작하기"}
+          variant="primary"
+          size="large"
+          fullWidth
           onPress={handleNext}
-          style={({ pressed }) => [
-            {
-              transform: [{ scale: pressed ? 0.97 : 1 }],
-              opacity: pressed ? 0.9 : 1,
-            },
-          ]}
-          className="bg-primary py-4 rounded-full items-center"
-        >
-          <Text className="text-white text-lg font-semibold">
-            {currentIndex === ONBOARDING_SLIDES.length - 1 ? "시작하기" : "다음"}
-          </Text>
-        </Pressable>
+        />
       </View>
     </ScreenContainer>
   );

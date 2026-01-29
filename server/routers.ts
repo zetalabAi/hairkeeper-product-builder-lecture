@@ -4,6 +4,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
+import Replicate from "replicate";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -52,54 +53,48 @@ export const appRouter = router({
         return analysis;
       }),
 
-    // Generate face swap with selected style
+    // Generate face swap with selected style using Replicate API
     synthesizeFace: publicProcedure
       .input(
         z.object({
           originalImageUrl: z.string().url(),
+          selectedFaceUrl: z.string().url(),
           nationality: z.string(),
           gender: z.string(),
           style: z.string(),
         })
       )
       .mutation(async ({ input }) => {
-        // For MVP, we'll use LLM to generate a description and return a placeholder
-        // In production, this would integrate with image generation APIs like Replicate or Stability AI
-        const response = await invokeLLM({
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a Korean beauty expert specializing in facial feature enhancement. Your task is to describe how to enhance ONLY the facial features (eyes, nose, mouth, eyebrows) according to Korean beauty standards, while PRESERVING the face shape, hair, and background 100%. Korean beauty standards emphasize: clear smooth skin, defined double eyelids, high nose bridge, small V-shaped face, full lips. Return JSON with: description (string), preservedElements (array of strings including 'face shape', 'hair', 'background'), modifiedElements (array of strings for facial features only).",
-            },
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: `Analyze this ${input.gender} face and describe how to enhance ONLY the facial features (eyes, nose, mouth, eyebrows) to match Korean beauty standards for ${input.style} style. The face shape, hair, and background MUST remain completely unchanged. Focus on subtle, natural enhancements that respect the original face structure.`,
-                },
-                {
-                  type: "image_url",
-                  image_url: { url: input.originalImageUrl },
-                },
-              ],
-            },
-          ],
-          response_format: { type: "json_object" },
-        });
+        try {
+          // Initialize Replicate client
+          const replicate = new Replicate({
+            auth: process.env.REPLICATE_API_TOKEN,
+          });
 
-        const content = response.choices[0].message.content;
-        const synthesis = JSON.parse(typeof content === 'string' ? content : '');
-        
-        // TODO: Integrate with actual image generation API
-        // For now, return the original image URL as a placeholder
-        return {
-          resultImageUrl: input.originalImageUrl,
-          description: synthesis.description,
-          preservedElements: synthesis.preservedElements,
-          modifiedElements: synthesis.modifiedElements,
-        };
+          // Run face swap model
+          const output = await replicate.run(
+            "codeplugtech/face-swap:278a81e7ebb22db98bcba54de985d22cc1abeead2754eb1f2af717247be69b34",
+            {
+              input: {
+                swap_image: input.selectedFaceUrl, // The face to swap in (selected Korean face)
+                input_image: input.originalImageUrl, // The original image
+              },
+            }
+          ) as any;
+
+          // Extract result URL
+          const resultImageUrl = typeof output === 'string' ? output : output.url?.() || output;
+
+          return {
+            resultImageUrl,
+            description: `Face swapped successfully with ${input.gender} ${input.style} style`,
+            preservedElements: ["face shape", "hair", "background"],
+            modifiedElements: ["eyes", "nose", "mouth", "eyebrows"],
+          };
+        } catch (error) {
+          console.error("Face swap error:", error);
+          throw new Error("Failed to swap face. Please try again.");
+        }
       }),
   }),
 });
