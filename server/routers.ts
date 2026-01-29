@@ -5,6 +5,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
 import Replicate from "replicate";
+import { storagePut } from "./storage";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -94,6 +95,38 @@ export const appRouter = router({
         } catch (error) {
           console.error("Face swap error:", error);
           throw new Error("Failed to swap face. Please try again.");
+        }
+      }),
+
+    // Upload image to storage and return public URL
+    uploadImage: publicProcedure
+      .input(
+        z.object({
+          base64Data: z.string(),
+          filename: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        try {
+          // Remove data URL prefix if present
+          const base64 = input.base64Data.replace(/^data:image\/\w+;base64,/, "");
+          
+          // Convert base64 to buffer
+          const buffer = Buffer.from(base64, "base64");
+          
+          // Upload to storage
+          const result = await storagePut(
+            `uploads/${Date.now()}_${input.filename}`,
+            buffer,
+            "image/jpeg"
+          );
+          
+          return {
+            url: result.url,
+          };
+        } catch (error) {
+          console.error("Image upload error:", error);
+          throw new Error("Failed to upload image. Please try again.");
         }
       }),
   }),

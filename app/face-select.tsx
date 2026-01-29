@@ -8,25 +8,13 @@ import { Button } from "@/components/ui/button";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { KOREAN_FACE_URLS } from "@/shared/face-urls";
+import { prepareImageForUpload } from "@/lib/upload-image";
 
-// AI 생성 한국인 얼굴 이미지 (로컬 assets)
+// AI 생성 한국인 얼굴 이미지 (로컬 assets + S3 URL)
 const KOREAN_FACES = {
-  male: [
-    { id: "male-1", source: require("@/assets/faces/korean_male_1.png") },
-    { id: "male-2", source: require("@/assets/faces/korean_male_2.png") },
-    { id: "male-3", source: require("@/assets/faces/korean_male_3.png") },
-    { id: "male-4", source: require("@/assets/faces/korean_male_4.png") },
-    { id: "male-5", source: require("@/assets/faces/korean_male_5.png") },
-    { id: "male-6", source: require("@/assets/faces/korean_male_6.png") },
-  ],
-  female: [
-    { id: "female-1", source: require("@/assets/faces/korean_female_1.png") },
-    { id: "female-2", source: require("@/assets/faces/korean_female_2.png") },
-    { id: "female-3", source: require("@/assets/faces/korean_female_3.png") },
-    { id: "female-4", source: require("@/assets/faces/korean_female_4.png") },
-    { id: "female-5", source: require("@/assets/faces/korean_female_5.png") },
-    { id: "female-6", source: require("@/assets/faces/korean_female_6.png") },
-  ],
+  male: KOREAN_FACE_URLS.male,
+  female: KOREAN_FACE_URLS.female,
 };
 
 export default function FaceSelectScreen() {
@@ -41,6 +29,7 @@ export default function FaceSelectScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const synthesizeMutation = trpc.ai.synthesizeFace.useMutation();
+  const uploadImageMutation = trpc.ai.uploadImage.useMutation();
 
   // 선택된 성별에 맞는 한국인 얼굴 목록
   const faces = gender === "male" ? KOREAN_FACES.male : KOREAN_FACES.female;
@@ -62,17 +51,24 @@ export default function FaceSelectScreen() {
     setIsProcessing(true);
 
     try {
-      // Get selected face image
+      // Get selected face image with S3 URL
       const selectedFace = faces.find((f) => f.id === selectedFaceId);
       if (!selectedFace) return;
 
-      // Convert local image to URL (for now, use a placeholder URL)
-      // In production, upload to S3 and use the S3 URL
-      const selectedFaceUrl = `https://replicate.delivery/pbxt/placeholder-korean-face-${selectedFaceId}.jpg`;
+      // Use actual S3 URL for Replicate API
+      const selectedFaceUrl = selectedFace.url;
+
+      // Upload original image to S3 if it's a local file
+      let originalImageUrl = imageUri;
+      if (!imageUri.startsWith("http")) {
+        const imageData = await prepareImageForUpload(imageUri);
+        const uploadResult = await uploadImageMutation.mutateAsync(imageData);
+        originalImageUrl = uploadResult.url;
+      }
 
       // Call AI synthesis API with selected face
       const result = await synthesizeMutation.mutateAsync({
-        originalImageUrl: imageUri,
+        originalImageUrl,
         selectedFaceUrl, // 선택한 한국인 얼굴 이미지 URL
         nationality: "한국인", // 한국인으로 고정
         gender,
@@ -237,7 +233,7 @@ export default function FaceSelectScreen() {
                   transform: [{ scale: pressed ? 0.97 : 1 }],
                 })}
               >
-                <Image source={item.source} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+                <Image source={item.localSource} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
                 {isSelected && (
                   <View
                     style={{
