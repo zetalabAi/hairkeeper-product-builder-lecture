@@ -7,6 +7,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
 import * as Haptics from "expo-haptics";
 import * as Sharing from "expo-sharing";
+import * as MediaLibrary from "expo-media-library";
+import * as FileSystem from "expo-file-system/legacy";
 import { useState, useRef } from "react";
 
 export default function ResultScreen() {
@@ -35,10 +37,35 @@ export default function ResultScreen() {
   };
 
   const handleSave = async () => {
-    if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      // Request permission
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        alert("갤러리 접근 권한이 필요합니다.");
+        return;
+      }
+
+      // Download image to local file system
+      const filename = `hairkeeper_${Date.now()}.jpg`;
+      const fileUri = FileSystem.documentDirectory + filename;
+      
+      const downloadResult = await FileSystem.downloadAsync(
+        resultImageUri,
+        fileUri
+      );
+
+      // Save to media library
+      const asset = await MediaLibrary.createAssetAsync(downloadResult.uri);
+      await MediaLibrary.createAlbumAsync("머리보존 AI", asset, false);
+
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      alert("결과 이미지가 갤러리에 저장되었습니다!");
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("이미지 저장에 실패했습니다.");
     }
-    alert("결과 이미지가 갤러리에 저장되었습니다!");
   };
 
   const handleShare = async () => {

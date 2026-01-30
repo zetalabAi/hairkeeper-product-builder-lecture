@@ -4,39 +4,15 @@ import { ScreenContainer } from "@/components/screen-container";
 import { SubScreenHeader } from "@/components/sub-screen-header";
 import { useColors } from "@/hooks/use-colors";
 import * as Haptics from "expo-haptics";
-
-// 더미 히스토리 데이터 (실제로는 데이터베이스에서 가져와야 함)
-const HISTORY_DATA = [
-  {
-    id: "1",
-    originalImage: "https://via.placeholder.com/300x400",
-    resultImage: "https://via.placeholder.com/300x400",
-    date: "2026-01-29",
-    gender: "여성",
-    style: "자연스러운",
-  },
-  {
-    id: "2",
-    originalImage: "https://via.placeholder.com/300x400",
-    resultImage: "https://via.placeholder.com/300x400",
-    date: "2026-01-28",
-    gender: "남성",
-    style: "세련된",
-  },
-  {
-    id: "3",
-    originalImage: "https://via.placeholder.com/300x400",
-    resultImage: "https://via.placeholder.com/300x400",
-    date: "2026-01-27",
-    gender: "여성",
-    style: "화려한",
-  },
-];
+import { trpc } from "@/lib/trpc";
 
 export default function HistoryScreen() {
   const colors = useColors();
 
-  const handleItemPress = (item: typeof HISTORY_DATA[0]) => {
+  // Fetch history from database
+  const { data: projects, isLoading, error } = trpc.ai.getHistory.useQuery({});
+
+  const handleItemPress = (item: any) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -51,7 +27,7 @@ export default function HistoryScreen() {
     });
   };
 
-  const renderItem = ({ item }: { item: typeof HISTORY_DATA[0] }) => (
+  const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity
       onPress={() => handleItemPress(item)}
       style={{
@@ -70,7 +46,7 @@ export default function HistoryScreen() {
     >
       {/* Result Image */}
       <Image
-        source={{ uri: item.resultImage }}
+        source={{ uri: item.resultImageUrl || item.originalImageUrl }}
         style={{
           width: "100%",
           aspectRatio: 3 / 4,
@@ -89,7 +65,7 @@ export default function HistoryScreen() {
             marginBottom: 4,
           }}
         >
-          {item.gender} - {item.style}
+          {item.gender === "male" ? "남성" : "여성"} - {item.style}
         </Text>
         <Text
           style={{
@@ -97,7 +73,7 @@ export default function HistoryScreen() {
             color: colors.muted,
           }}
         >
-          {item.date}
+          {new Date(item.createdAt).toLocaleDateString("ko-KR")}
         </Text>
       </View>
     </TouchableOpacity>
@@ -108,7 +84,39 @@ export default function HistoryScreen() {
       <SubScreenHeader title="히스토리" />
 
       <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16 }}>
-        {HISTORY_DATA.length === 0 ? (
+        {isLoading ? (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 16, color: colors.muted }}>
+              로딩 중...
+            </Text>
+          </View>
+        ) : error ? (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              paddingHorizontal: 32,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                color: colors.error,
+                textAlign: "center",
+                lineHeight: 24,
+              }}
+            >
+              히스토리를 불러오는 데 실패했습니다.
+            </Text>
+          </View>
+        ) : !projects || projects.length === 0 ? (
           <View
             style={{
               flex: 1,
@@ -131,9 +139,9 @@ export default function HistoryScreen() {
           </View>
         ) : (
           <FlatList
-            data={HISTORY_DATA}
+            data={projects}
             renderItem={renderItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             numColumns={2}
             columnWrapperStyle={{
               justifyContent: "space-between",

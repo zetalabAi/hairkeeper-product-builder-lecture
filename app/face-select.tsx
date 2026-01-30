@@ -27,6 +27,8 @@ export default function FaceSelectScreen() {
 
   const [selectedFaceId, setSelectedFaceId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState("");
 
   const synthesizeMutation = trpc.ai.synthesizeFace.useMutation();
   const uploadImageMutation = trpc.ai.uploadImage.useMutation();
@@ -49,6 +51,8 @@ export default function FaceSelectScreen() {
     }
 
     setIsProcessing(true);
+    setProgress(0);
+    setProgressMessage("이미지 업로드 준비 중...");
 
     try {
       // Get selected face image with S3 URL
@@ -61,16 +65,24 @@ export default function FaceSelectScreen() {
       // Upload original image to S3 if it's a local file
       console.log("Starting image upload...");
       console.log("Original imageUri:", imageUri);
+      setProgress(10);
+      setProgressMessage("이미지 업로드 중...");
+      
       let originalImageUrl = imageUri;
       if (!imageUri.startsWith("http")) {
         console.log("Uploading local image to S3...");
         const imageData = await prepareImageForUpload(imageUri);
         console.log("Image data prepared, filename:", imageData.filename);
+        setProgress(20);
         const uploadResult = await uploadImageMutation.mutateAsync(imageData);
         originalImageUrl = uploadResult.url;
         console.log("Image uploaded successfully:", originalImageUrl);
+        setProgress(30);
+        setProgressMessage("업로드 완료! AI 합성 시작...");
       } else {
         console.log("Image is already a URL, skipping upload");
+        setProgress(30);
+        setProgressMessage("AI 합성 시작...");
       }
 
       // Call AI synthesis API with selected face
@@ -81,14 +93,20 @@ export default function FaceSelectScreen() {
         gender,
         style,
       });
+      setProgress(40);
+      setProgressMessage("얼굴 합성 중... (약 30초 소요)");
+      
       const result = await synthesizeMutation.mutateAsync({
         originalImageUrl,
         selectedFaceUrl, // 선택한 한국인 얼굴 이미지 URL
         nationality: "한국인", // 한국인으로 고정
         gender,
         style,
+        userId: 1, // TODO: Replace with actual user ID from auth context
       });
       console.log("Face Swap API result:", result);
+      setProgress(100);
+      setProgressMessage("합성 완료!");
 
       // Navigate to result screen with synthesized image
       router.push({
@@ -164,8 +182,7 @@ export default function FaceSelectScreen() {
               lineHeight: 22,
             }}
           >
-            머리카락과 배경은 그대로 유지하면서{"\n"}
-            이목구비만 한국 미의 기준에 맞춰 수정합니다
+            {progressMessage}
           </Text>
 
           {/* Progress Indicator */}
@@ -187,7 +204,7 @@ export default function FaceSelectScreen() {
               <View
                 style={{
                   height: "100%",
-                  width: "70%",
+                  width: `${progress}%`,
                   backgroundColor: colors.primary,
                   borderRadius: 2,
                 }}
