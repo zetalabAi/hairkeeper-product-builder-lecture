@@ -31,7 +31,6 @@ export default function FaceSelectScreen() {
   const [progressMessage, setProgressMessage] = useState("");
 
   const synthesizeMutation = trpc.ai.synthesizeFace.useMutation();
-  const uploadImageMutation = trpc.ai.uploadImage.useMutation();
 
   // 선택된 성별에 맞는 한국인 얼굴 목록
   const faces = gender === "male" ? KOREAN_FACES.male : KOREAN_FACES.female;
@@ -52,7 +51,7 @@ export default function FaceSelectScreen() {
 
     setIsProcessing(true);
     setProgress(0);
-    setProgressMessage("이미지 업로드 준비 중...");
+    setProgressMessage("이미지 준비 중...");
 
     try {
       // Get selected face image with S3 URL
@@ -62,47 +61,29 @@ export default function FaceSelectScreen() {
       // Use actual S3 URL for Replicate API
       const selectedFaceUrl = selectedFace.url;
 
-      // Upload original image to S3 if it's a local file
-      console.log("Starting image upload...");
+      // Prepare original image as Base64
+      console.log("Starting image preparation...");
       console.log("Original imageUri:", imageUri);
       setProgress(10);
-      setProgressMessage("이미지 업로드 중...");
+      setProgressMessage("이미지 인코딩 중...");
       
-      let originalImageUrl = imageUri;
-      if (!imageUri.startsWith("http")) {
-        console.log("Uploading local image to S3...");
-        const imageData = await prepareImageForUpload(imageUri);
-        console.log("Image data prepared, filename:", imageData.filename);
-        setProgress(20);
-        const uploadResult = await uploadImageMutation.mutateAsync(imageData);
-        originalImageUrl = uploadResult.url;
-        console.log("Image uploaded successfully:", originalImageUrl);
-        setProgress(30);
-        setProgressMessage("업로드 완료! AI 합성 시작...");
-      } else {
-        console.log("Image is already a URL, skipping upload");
-        setProgress(30);
-        setProgressMessage("AI 합성 시작...");
-      }
+      const imageData = await prepareImageForUpload(imageUri);
+      console.log("Image data prepared, filename:", imageData.filename);
+      setProgress(30);
+      setProgressMessage("AI 합성 시작...");
 
       // Call AI synthesis API with selected face
-      console.log("Calling Face Swap API with params:", {
-        originalImageUrl,
-        selectedFaceUrl,
-        nationality: "한국인",
-        gender,
-        style,
-      });
+      console.log("Calling Face Swap API with Base64 image");
       setProgress(40);
       setProgressMessage("얼굴 합성 중... (약 30초 소요)");
       
       const result = await synthesizeMutation.mutateAsync({
-        originalImageUrl,
-        selectedFaceUrl, // 선택한 한국인 얼굴 이미지 URL
-        nationality: "한국인", // 한국인으로 고정
+        originalImageBase64: imageData.base64Data,
+        selectedFaceUrl,
+        nationality: "한국인",
         gender,
         style,
-        userId: 1, // TODO: Replace with actual user ID from auth context
+        userId: 1,
       });
       console.log("Face Swap API result:", result);
       setProgress(100);
