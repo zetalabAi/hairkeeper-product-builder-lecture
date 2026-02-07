@@ -1,0 +1,99 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own data, admins can read all
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Users can update their own profile (except role)
+      allow update: if isOwner(userId) &&
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+
+      // Only server can create users (via Firebase Admin SDK)
+      allow create: if false;
+
+      // Users cannot delete their own account (use server endpoint)
+      allow delete: if false;
+    }
+
+    // Projects collection
+    match /projects/{projectId} {
+      // Users can read their own projects
+      allow read: if isAuthenticated() &&
+                     resource.data.userId == request.auth.uid;
+
+      // Users can create projects
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid;
+
+      // Users can update their own projects (status, metadata)
+      allow update: if isAuthenticated() &&
+                       resource.data.userId == request.auth.uid;
+
+      // Users can delete their own projects
+      allow delete: if isAuthenticated() &&
+                       resource.data.userId == request.auth.uid;
+    }
+
+    // Subscriptions collection
+    match /subscriptions/{subscriptionId} {
+      // Users can read their own subscriptions
+      allow read: if isAuthenticated() &&
+                     resource.data.userId == request.auth.uid;
+
+      // Only server can create/update/delete subscriptions
+      allow write: if false;
+    }
+
+    // Usage logs collection
+    match /usageLogs/{logId} {
+      // Users can read their own usage logs
+      allow read: if isAuthenticated() &&
+                     resource.data.userId == request.auth.uid;
+
+      // Only server can create usage logs
+      allow write: if false;
+    }
+
+    // Face pool collection
+    match /facePool/{faceId} {
+      // All authenticated users can read face pool
+      allow read: if isAuthenticated();
+
+      // Only admins or server can write
+      allow write: if isAdmin();
+    }
+
+    // Model performance collection
+    match /modelPerformance/{modelId} {
+      // All authenticated users can read
+      allow read: if isAuthenticated();
+
+      // Only server can write
+      allow write: if false;
+    }
+
+    // OpenId mapping (legacy)
+    match /openIdMapping/{openId} {
+      // Only server can read/write
+      allow read, write: if false;
+    }
+  }
+}

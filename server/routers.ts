@@ -1,11 +1,11 @@
 import { COOKIE_NAME } from "../shared/const.js";
 import { getSessionCookieOptions } from "./_core/cookies";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
 import Replicate from "replicate";
 import { storagePut, storageGet } from "./storage";
-import { createProject, updateProject, getUserProjects } from "./db-projects";
+import * as db from "./db";
 
 export const appRouter = router({
   auth: router({

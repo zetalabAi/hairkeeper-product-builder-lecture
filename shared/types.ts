@@ -3,5 +3,6 @@
  * Import shared types from this single entry point.
  */
 
-export type * from "../drizzle/schema";
+// Firebase/Firestore types are now defined in server/_core/firestore.ts
+// No drizzle/schema exports needed anymore
 export * from "./_core/errors";
