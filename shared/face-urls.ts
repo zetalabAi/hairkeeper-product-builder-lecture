@@ -1,4 +1,6 @@
-// AI 생성 한국인 얼굴 이미지 URL (S3에 업로드됨)
+// AI 생성 한국인 얼굴 이미지 URL
+// TODO: Upload face images to Google Cloud Storage and update URLs
+// Current URLs are temporary - replace with your own GCS bucket URLs
 export const KOREAN_FACE_URLS = {
   male: [
     {

@@ -11,7 +11,7 @@ Firebase Auth가 React Native에서 작동하려면 네이티브 설정 파일�
 3. **프로젝트 설정** (톱니바퀴 아이콘) → **일반** 탭
 4. **내 앱** 섹션에서 iOS 앱 찾기
    - 없다면: **앱 추가** → **iOS** 선택
-   - Bundle ID: `space.manus.hairkeeper_ai.t20260127043711` (또는 `app.json`의 `ios.bundleIdentifier` 값)
+   - Bundle ID: `ai.hairkeeper.app` (또는 `app.json`의 `ios.bundleIdentifier` 값)
 5. **GoogleService-Info.plist 다운로드** 버튼 클릭
 
 ### 2. 파일 배치
@@ -75,7 +75,7 @@ grep -A 1 "REVERSED_CLIENT_ID" GoogleService-Info.plist
 3. **프로젝트 설정** (톱니바퀴 아이콘) → **일반** 탭
 4. **내 앱** 섹션에서 Android 앱 찾기
    - 없다면: **앱 추가** → **Android** 선택
-   - 패키지 이름: `space.manus.hairkeeper_ai.t20260127043711` (또는 `app.json`의 `android.package` 값)
+   - 패키지 이름: `ai.hairkeeper.app` (또는 `app.json`의 `android.package` 값)
    - SHA-1 인증서 지문: 개발 중에는 선택사항
 5. **google-services.json 다운로드** 버튼 클릭
 

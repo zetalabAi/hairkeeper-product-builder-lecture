@@ -14,8 +14,9 @@ async function testReplicate() {
   
   try {
     const replicate = new Replicate({ auth: apiToken });
-    
+
     // Test with public image URLs
+    // TODO: Replace with your own GCS-hosted images
     const swapImage = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663318300561/OHPrpkHcIbEVVgqn.png";
     const inputImage = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663318300561/QejMAWfyFonBSUSX.png"; // Korean female face
     
