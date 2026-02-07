@@ -1,18 +1,24 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
-import { sdk } from "./sdk";
+import { unifiedAuthMiddleware } from "./auth-migration";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
   user: User | null;
+  /** Indicates if user authenticated via Firebase (vs Manus) */
+  isFirebaseAuth?: boolean;
 };
 
 export async function createContext(opts: CreateExpressContextOptions): Promise<TrpcContext> {
   let user: User | null = null;
+  let isFirebaseAuth = false;
 
   try {
-    user = await sdk.authenticateRequest(opts.req);
+    // Use unified auth middleware that supports both Firebase and Manus
+    const authResult = await unifiedAuthMiddleware(opts.req);
+    user = authResult.user;
+    isFirebaseAuth = authResult.source === "firebase";
   } catch (error) {
     // Authentication is optional for public procedures.
     user = null;
@@ -22,5 +28,6 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
     req: opts.req,
     res: opts.res,
     user,
+    isFirebaseAuth,
   };
 }
