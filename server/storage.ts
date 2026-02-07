@@ -1,95 +1,56 @@
-// Preconfigured storage helpers for Manus WebDev templates
-// Uses the Biz-provided storage proxy (Authorization: Bearer <token>)
+/**
+ * Storage Module (Google Cloud Storage Only)
+ *
+ * 간소화된 스토리지 모듈 - GCS만 사용합니다.
+ */
 
-import { ENV } from "./_core/env";
+import { gcsUpload, gcsGetSignedUrl, gcsDelete, gcsExists } from "./_core/gcs-storage";
 
-type StorageConfig = { baseUrl: string; apiKey: string };
-
-function getStorageConfig(): StorageConfig {
-  const baseUrl = ENV.forgeApiUrl;
-  const apiKey = ENV.forgeApiKey;
-
-  if (!baseUrl || !apiKey) {
-    throw new Error(
-      "Storage proxy credentials missing: set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY",
-    );
-  }
-
-  return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
-}
-
-function buildUploadUrl(baseUrl: string, relKey: string): URL {
-  const url = new URL("v1/storage/upload", ensureTrailingSlash(baseUrl));
-  url.searchParams.set("path", normalizeKey(relKey));
-  return url;
-}
-
-async function buildDownloadUrl(baseUrl: string, relKey: string, apiKey: string): Promise<string> {
-  const downloadApiUrl = new URL("v1/storage/downloadUrl", ensureTrailingSlash(baseUrl));
-  downloadApiUrl.searchParams.set("path", normalizeKey(relKey));
-  const response = await fetch(downloadApiUrl, {
-    method: "GET",
-    headers: buildAuthHeaders(apiKey),
-  });
-  return (await response.json()).url;
-}
-
-function ensureTrailingSlash(value: string): string {
-  return value.endsWith("/") ? value : `${value}/`;
-}
-
-function normalizeKey(relKey: string): string {
-  return relKey.replace(/^\/+/, "");
-}
-
-function toFormData(
-  data: Buffer | Uint8Array | string,
-  contentType: string,
-  fileName: string,
-): FormData {
-  const blob =
-    typeof data === "string"
-      ? new Blob([data], { type: contentType })
-      : new Blob([data as any], { type: contentType });
-  const form = new FormData();
-  form.append("file", blob, fileName || "file");
-  return form;
-}
-
-function buildAuthHeaders(apiKey: string): HeadersInit {
-  return { Authorization: `Bearer ${apiKey}` };
-}
-
+/**
+ * 파일 업로드
+ *
+ * @param relKey - 파일 경로 (예: "generated/image.png")
+ * @param data - 파일 내용
+ * @param contentType - MIME 타입
+ * @returns 업로드된 파일의 키와 URL
+ */
 export async function storagePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
-  contentType = "application/octet-stream",
+  contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
-  const key = normalizeKey(relKey);
-  const uploadUrl = buildUploadUrl(baseUrl, key);
-  const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
-  const response = await fetch(uploadUrl, {
-    method: "POST",
-    headers: buildAuthHeaders(apiKey),
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
-    throw new Error(
-      `Storage upload failed (${response.status} ${response.statusText}): ${message}`,
-    );
-  }
-  const url = (await response.json()).url;
-  return { key, url };
+  console.log(`[Storage] Uploading: ${relKey}`);
+  return gcsUpload(relKey, data, contentType, { public: true });
 }
 
+/**
+ * 파일 URL 가져오기
+ *
+ * @param relKey - 파일 경로
+ * @returns 파일의 키와 URL (Signed URL)
+ */
 export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
-  const key = normalizeKey(relKey);
-  return {
-    key,
-    url: await buildDownloadUrl(baseUrl, key, apiKey),
-  };
+  console.log(`[Storage] Getting URL for: ${relKey}`);
+  const url = await gcsGetSignedUrl(relKey);
+  return { key: relKey, url };
+}
+
+/**
+ * 파일 삭제
+ *
+ * @param relKey - 파일 경로
+ */
+export async function storageDelete(relKey: string): Promise<void> {
+  console.log(`[Storage] Deleting: ${relKey}`);
+  await gcsDelete(relKey);
+}
+
+/**
+ * 파일 존재 여부 확인
+ *
+ * @param relKey - 파일 경로
+ * @returns 파일이 존재하면 true
+ */
+export async function storageExists(relKey: string): Promise<boolean> {
+  return gcsExists(relKey);
 }

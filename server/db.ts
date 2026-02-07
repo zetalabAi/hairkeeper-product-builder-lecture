@@ -1,211 +1,122 @@
-import { eq, and, desc } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
-import {
-  InsertUser,
-  users,
-  subscriptions,
-  projects,
-  facePool,
-  modelPerformance,
-  usageLogs,
-  type InsertSubscription,
-  type InsertProject,
-  type InsertFacePool,
-  type InsertModelPerformance,
-  type InsertUsageLog,
-} from "../drizzle/schema";
-import { ENV } from "./_core/env";
+/**
+ * Database Module (Firestore Only)
+ *
+ * 간소화된 데이터베이스 모듈 - Firestore만 사용합니다.
+ */
 
-let _db: ReturnType<typeof drizzle> | null = null;
+import * as firestoreDb from "./_core/firestore";
+import { Timestamp } from "firebase-admin/firestore";
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
-export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
-    }
-  }
-  return _db;
-}
+// Firestore 타입을 앱 전체에서 사용할 수 있도록 re-export
+export type { FirestoreUser as User } from "../shared/firestore-schema";
 
-export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
-  }
+// ============================================
+// User Operations
+// ============================================
 
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
-  }
+export async function upsertUser(user: {
+  openId: string;
+  uid?: string;
+  name?: string | null;
+  email?: string | null;
+  loginMethod?: string | null;
+  role?: "user" | "admin";
+  lastSignedIn?: Date;
+}): Promise<void> {
+  const uid = user.uid || user.openId; // uid 우선, 없으면 openId 사용
 
-  try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
-
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = "admin";
-      updateSet.role = "admin";
-    }
-
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
-
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
-  } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
-  }
+  await firestoreDb.firestoreUpsertUser({
+    uid,
+    openId: user.openId,
+    name: user.name || null,
+    email: user.email || null,
+    loginMethod: user.loginMethod || null,
+    role: user.role || "user",
+    lastSignedIn: user.lastSignedIn ? Timestamp.fromDate(user.lastSignedIn) : Timestamp.now(),
+  });
 }
 
 export async function getUserByOpenId(openId: string) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
-  }
+  const user = await firestoreDb.firestoreGetUserByOpenId(openId);
+  if (!user) return undefined;
 
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  // Firestore User를 앱 User 타입으로 변환
+  return {
+    id: 0, // 더미 ID (이전 MySQL 호환성)
+    openId: user.openId,
+    name: user.name,
+    email: user.email,
+    loginMethod: user.loginMethod,
+    role: user.role,
+    createdAt: user.createdAt instanceof Timestamp ? user.createdAt.toDate() : new Date(user.createdAt as any),
+    updatedAt: user.updatedAt instanceof Timestamp ? user.updatedAt.toDate() : new Date(user.updatedAt as any),
+    lastSignedIn: user.lastSignedIn instanceof Timestamp ? user.lastSignedIn.toDate() : new Date(user.lastSignedIn as any),
+  };
+}
 
-  return result.length > 0 ? result[0] : undefined;
+export async function getUserByUid(uid: string) {
+  const user = await firestoreDb.firestoreGetUserByUid(uid);
+  if (!user) return undefined;
+
+  return {
+    id: 0,
+    openId: user.openId,
+    name: user.name,
+    email: user.email,
+    loginMethod: user.loginMethod,
+    role: user.role,
+    createdAt: user.createdAt instanceof Timestamp ? user.createdAt.toDate() : new Date(user.createdAt as any),
+    updatedAt: user.updatedAt instanceof Timestamp ? user.updatedAt.toDate() : new Date(user.updatedAt as any),
+    lastSignedIn: user.lastSignedIn instanceof Timestamp ? user.lastSignedIn.toDate() : new Date(user.lastSignedIn as any),
+  };
 }
 
 // ============================================
-// Subscription Queries
+// Subscription Operations
 // ============================================
 
-export async function getUserSubscription(userId: number) {
-  const db = await getDb();
-  if (!db) return null;
-
-  const result = await db
-    .select()
-    .from(subscriptions)
-    .where(eq(subscriptions.userId, userId))
-    .orderBy(desc(subscriptions.createdAt))
-    .limit(1);
-
-  return result[0] || null;
+export async function getUserSubscription(userId: string) {
+  return firestoreDb.firestoreGetUserSubscription(userId);
 }
 
-export async function createSubscription(data: InsertSubscription) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  await db.insert(subscriptions).values(data);
+export async function createSubscription(data: any) {
+  return firestoreDb.firestoreCreateSubscription(data);
 }
 
-export async function updateSubscription(
-  userId: number,
-  data: Partial<InsertSubscription>
-) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  await db
-    .update(subscriptions)
-    .set(data)
-    .where(eq(subscriptions.userId, userId));
+export async function updateSubscription(subscriptionId: string, data: any) {
+  return firestoreDb.firestoreUpdateSubscription(subscriptionId, data);
 }
 
-export async function isPremiumUser(userId: number): Promise<boolean> {
-  const subscription = await getUserSubscription(userId);
-  if (!subscription) return false;
-
-  if (subscription.status === "premium" && subscription.expiryDate) {
-    return new Date(subscription.expiryDate) > new Date();
-  }
-
-  return false;
+export async function isPremiumUser(userId: string): Promise<boolean> {
+  return firestoreDb.firestoreIsPremiumUser(userId);
 }
 
 // ============================================
-// Project Queries
+// Project Operations
 // ============================================
 
-export async function getUserProjects(userId: number, limit = 20) {
-  const db = await getDb();
-  if (!db) return [];
-
-  return db
-    .select()
-    .from(projects)
-    .where(eq(projects.userId, userId))
-    .orderBy(desc(projects.createdAt))
-    .limit(limit);
+export async function getUserProjects(userId: string, limit = 20) {
+  return firestoreDb.firestoreGetUserProjects(userId, limit);
 }
 
-export async function getProject(projectId: number) {
-  const db = await getDb();
-  if (!db) return null;
-
-  const result = await db
-    .select()
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .limit(1);
-
-  return result[0] || null;
+export async function getProject(projectId: string) {
+  return firestoreDb.firestoreGetProject(projectId);
 }
 
-export async function createProject(data: InsertProject) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  await db.insert(projects).values(data);
+export async function createProject(data: any) {
+  return firestoreDb.firestoreCreateProject(data);
 }
 
-export async function updateProject(
-  projectId: number,
-  data: Partial<InsertProject>
-) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  await db.update(projects).set(data).where(eq(projects.id, projectId));
+export async function updateProject(projectId: string, data: any) {
+  return firestoreDb.firestoreUpdateProject(projectId, data);
 }
 
-export async function deleteProject(projectId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  await db.delete(projects).where(eq(projects.id, projectId));
+export async function deleteProject(projectId: string) {
+  return firestoreDb.firestoreDeleteProject(projectId);
 }
 
 // ============================================
-// Face Pool Queries
+// Face Pool Operations
 // ============================================
 
 export async function getFacesByFilter(
@@ -214,112 +125,50 @@ export async function getFacesByFilter(
   style: string,
   limit = 6
 ) {
-  const db = await getDb();
-  if (!db) return [];
-
-  return db
-    .select()
-    .from(facePool)
-    .where(
-      and(
-        eq(facePool.nationality, nationality),
-        eq(facePool.gender, gender),
-        eq(facePool.style, style),
-        eq(facePool.isActive, true)
-      )
-    )
-    .limit(limit);
+  return firestoreDb.firestoreGetFacesByFilter(nationality, gender, style, limit);
 }
 
-export async function getFaceById(faceId: number) {
-  const db = await getDb();
-  if (!db) return null;
-
-  const result = await db
-    .select()
-    .from(facePool)
-    .where(eq(facePool.id, faceId))
-    .limit(1);
-
-  return result[0] || null;
+export async function getFaceById(faceId: string) {
+  return firestoreDb.firestoreGetFaceById(faceId);
 }
 
-export async function createFace(data: InsertFacePool) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  await db.insert(facePool).values(data);
+export async function createFace(data: any) {
+  return firestoreDb.firestoreCreateFace(data);
 }
 
-export async function updateFace(faceId: number, data: Partial<InsertFacePool>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  await db.update(facePool).set(data).where(eq(facePool.id, faceId));
+export async function updateFace(faceId: string, data: any) {
+  return firestoreDb.firestoreUpdateFace(faceId, data);
 }
 
 // ============================================
-// Model Performance Queries
+// Model Performance Operations
 // ============================================
 
 export async function getActiveModels() {
-  const db = await getDb();
-  if (!db) return [];
-
-  return db
-    .select()
-    .from(modelPerformance)
-    .where(eq(modelPerformance.isActive, true))
-    .orderBy(desc(modelPerformance.grade));
+  return firestoreDb.firestoreGetActiveModels();
 }
 
 export async function getPrimaryModel() {
-  const db = await getDb();
-  if (!db) return null;
-
-  const result = await db
-    .select()
-    .from(modelPerformance)
-    .where(
-      and(
-        eq(modelPerformance.isActive, true),
-        eq(modelPerformance.grade, "S")
-      )
-    )
-    .orderBy(desc(modelPerformance.testedAt))
-    .limit(1);
-
-  return result[0] || null;
+  return firestoreDb.firestoreGetPrimaryModel();
 }
 
-export async function createModelPerformance(data: InsertModelPerformance) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  await db.insert(modelPerformance).values(data);
+export async function createModelPerformance(data: any) {
+  return firestoreDb.firestoreCreateModelPerformance(data);
 }
 
 // ============================================
-// Usage Log Queries
+// Usage Log Operations
 // ============================================
 
-export async function logUsage(data: InsertUsageLog) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  await db.insert(usageLogs).values(data);
+export async function logUsage(data: any) {
+  return firestoreDb.firestoreLogUsage(data);
 }
 
-export async function getUserUsageStats(userId: number, days = 30) {
-  const db = await getDb();
-  if (!db) return [];
+export async function getUserUsageStats(userId: string, days = 30) {
+  return firestoreDb.firestoreGetUserUsageStats(userId, days);
+}
 
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
-
-  return db
-    .select()
-    .from(usageLogs)
-    .where(eq(usageLogs.userId, userId))
-    .orderBy(desc(usageLogs.createdAt));
+// DB 인스턴스 가져오기 (호환성)
+export function getDb() {
+  return firestoreDb.getFirestoreDb();
 }
