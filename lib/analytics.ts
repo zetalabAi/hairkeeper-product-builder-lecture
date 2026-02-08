@@ -4,8 +4,17 @@
  * 사용자 행동 추적 및 앱 사용 패턴 분석
  */
 
-import analytics from '@react-native-firebase/analytics';
 import { Platform } from 'react-native';
+
+// Web에서는 @react-native-firebase/analytics를 사용할 수 없으므로 조건부 import
+let analytics: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    analytics = require('@react-native-firebase/analytics').default;
+  } catch (error) {
+    console.warn('[Analytics] Firebase Analytics not available:', error);
+  }
+}
 
 /**
  * Analytics 초기화 여부

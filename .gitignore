@@ -51,6 +51,7 @@ app-example
 # IDE
 .vscode/
 .idea/
+.idx/
 *.swp
 *.swo
 *~
@@ -66,3 +67,7 @@ Thumbs.db
 *.tgz
 *.tar.gz
 .cache/
+
+# Face pool temporary folders
+faces/
+faces-upload/

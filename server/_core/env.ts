@@ -16,4 +16,8 @@ export const ENV = {
   googleCloudProject: process.env.GOOGLE_CLOUD_PROJECT ?? "",
   googleApplicationCredentials: process.env.GOOGLE_APPLICATION_CREDENTIALS ?? "",
   vertexAiLocation: process.env.VERTEX_AI_LOCATION ?? "us-central1",
+
+  // AI Services
+  ONEMIN_AI_API_KEY: process.env.ONEMIN_AI_API_KEY ?? "",
+  REPLICATE_API_TOKEN: process.env.REPLICATE_API_TOKEN ?? "",
 };
