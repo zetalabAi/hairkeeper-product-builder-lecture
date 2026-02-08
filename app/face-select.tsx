@@ -8,14 +8,7 @@ import { Button } from "@/components/ui/button";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { KOREAN_FACE_URLS } from "@/shared/face-urls";
 import { prepareImageForUpload } from "@/lib/upload-image";
-
-// AI 생성 한국인 얼굴 이미지 (로컬 assets + S3 URL)
-const KOREAN_FACES = {
-  male: KOREAN_FACE_URLS.male,
-  female: KOREAN_FACE_URLS.female,
-};
 
 export default function FaceSelectScreen() {
   const params = useLocalSearchParams();
@@ -32,8 +25,14 @@ export default function FaceSelectScreen() {
 
   const synthesizeMutation = trpc.ai.synthesizeFace.useMutation();
 
-  // 선택된 성별에 맞는 한국인 얼굴 목록
-  const faces = gender === "male" ? KOREAN_FACES.male : KOREAN_FACES.female;
+  // Firebase에서 얼굴 풀 가져오기
+  const { data: facePoolData, isLoading: isFacePoolLoading } = trpc.ai.getFacePool.useQuery({
+    nationality: "korea",
+    gender: gender as "male" | "female",
+    style: style || "default",
+  });
+
+  const faces = facePoolData?.faces || [];
 
   const handleSelectFace = (faceId: string) => {
     if (Platform.OS !== "web") {
@@ -54,12 +53,12 @@ export default function FaceSelectScreen() {
     setProgressMessage("이미지 준비 중...");
 
     try {
-      // Get selected face image with S3 URL
+      // Get selected face image with GCS URL
       const selectedFace = faces.find((f) => f.id === selectedFaceId);
       if (!selectedFace) return;
 
-      // Use actual S3 URL for Replicate API
-      const selectedFaceUrl = selectedFace.url;
+      // Use actual GCS URL for Dzine AI API
+      const selectedFaceUrl = selectedFace.imageUrl;
 
       // Prepare original image as Base64
       console.log("Starting image preparation...");
@@ -230,50 +229,62 @@ export default function FaceSelectScreen() {
         </View>
 
         {/* Face Grid */}
-        <FlatList
-          data={faces}
-          keyExtractor={(item) => item.id}
-          numColumns={3}
-          columnWrapperStyle={{ gap: 12 }}
-          contentContainerStyle={{ gap: 12, paddingBottom: 100 }}
-          renderItem={({ item }) => {
-            const isSelected = selectedFaceId === item.id;
-            return (
-              <Pressable
-                onPress={() => handleSelectFace(item.id)}
-                style={({ pressed }) => ({
-                  flex: 1,
-                  aspectRatio: 0.75,
-                  borderRadius: 16,
-                  overflow: "hidden",
-                  borderWidth: isSelected ? 3 : 0,
-                  borderColor: colors.primary,
-                  opacity: pressed ? 0.85 : 1,
-                  transform: [{ scale: pressed ? 0.97 : 1 }],
-                })}
-              >
-                <Image source={item.localSource} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
-                {isSelected && (
-                  <View
-                    style={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      width: 28,
-                      height: 28,
-                      borderRadius: 14,
-                      backgroundColor: colors.primary,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                  </View>
-                )}
-              </Pressable>
-            );
-          }}
-        />
+        {isFacePoolLoading ? (
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={{ marginTop: 16, color: colors.muted }}>얼굴 이미지 불러오는 중...</Text>
+          </View>
+        ) : faces.length === 0 ? (
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name="images-outline" size={48} color={colors.muted} />
+            <Text style={{ marginTop: 16, color: colors.muted }}>사용 가능한 얼굴이 없습니다</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={faces}
+            keyExtractor={(item) => item.id}
+            numColumns={3}
+            columnWrapperStyle={{ gap: 12 }}
+            contentContainerStyle={{ gap: 12, paddingBottom: 100 }}
+            renderItem={({ item }) => {
+              const isSelected = selectedFaceId === item.id;
+              return (
+                <Pressable
+                  onPress={() => handleSelectFace(item.id)}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    aspectRatio: 0.75,
+                    borderRadius: 16,
+                    overflow: "hidden",
+                    borderWidth: isSelected ? 3 : 0,
+                    borderColor: colors.primary,
+                    opacity: pressed ? 0.85 : 1,
+                    transform: [{ scale: pressed ? 0.97 : 1 }],
+                  })}
+                >
+                  <Image source={{ uri: item.imageUrl }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+                  {isSelected && (
+                    <View
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        width: 28,
+                        height: 28,
+                        borderRadius: 14,
+                        backgroundColor: colors.primary,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+                    </View>
+                  )}
+                </Pressable>
+              );
+            }}
+          />
+        )}
       </View>
 
       {/* Bottom Button */}

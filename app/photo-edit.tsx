@@ -20,24 +20,6 @@ const GENDERS: { value: Gender; label: string }[] = [
   { value: "female", label: "여성" },
 ];
 
-const MALE_STYLES = [
-  "자연스러운",
-  "단정한",
-  "세련된",
-  "카리스마",
-  "부드러운",
-  "지적인",
-];
-
-const FEMALE_STYLES = [
-  "자연스러운",
-  "우아한",
-  "발랄한",
-  "시크한",
-  "부드러운",
-  "세련된",
-];
-
 export default function PhotoEditScreen() {
   const params = useLocalSearchParams();
   const imageUri = params.imageUri as string;
@@ -45,10 +27,9 @@ export default function PhotoEditScreen() {
 
   const [nationality, setNationality] = useState<Nationality | null>("korean");
   const [gender, setGender] = useState<Gender | null>(null);
-  const [style, setStyle] = useState<string | null>(null);
 
   const handleNext = () => {
-    if (!nationality || !gender || !style) return;
+    if (!nationality || !gender) return;
 
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -60,7 +41,7 @@ export default function PhotoEditScreen() {
         imageUri,
         nationality,
         gender,
-        style,
+        style: "default", // 기본 스타일 사용
       },
     });
   };
@@ -77,18 +58,9 @@ export default function PhotoEditScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     setGender(value);
-    setStyle(null); // Reset style when gender changes
   };
 
-  const handleSelectStyle = (value: string) => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setStyle(value);
-  };
-
-  const isComplete = nationality && gender && style;
-  const availableStyles = gender === "female" ? FEMALE_STYLES : MALE_STYLES;
+  const isComplete = nationality && gender;
 
   return (
     <ScreenContainer className="bg-background">
@@ -99,7 +71,7 @@ export default function PhotoEditScreen() {
         <View className="px-6 py-4">
           {/* Info */}
           <Text className="text-sm text-muted text-center mb-8">
-            원하는 얼굴 스타일을 선택하세요
+            성별을 선택하세요
           </Text>
 
           {/* Nationality Selection - Hidden (Korean only) */}
@@ -152,51 +124,6 @@ export default function PhotoEditScreen() {
               })}
             </View>
           </View>
-
-          {/* Style Selection */}
-          {gender && (
-            <View className="mb-8">
-              <Text className="text-base font-semibold text-foreground mb-3">
-                스타일
-              </Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                {availableStyles.map((item) => {
-                  const isSelected = style === item;
-                  return (
-                    <Pressable
-                      key={item}
-                      onPress={() => handleSelectStyle(item)}
-                      style={({ pressed }) => ({
-                        paddingVertical: 12,
-                        paddingHorizontal: 20,
-                        borderRadius: 16,
-                        backgroundColor: isSelected
-                          ? colors.primary
-                          : colors.surface,
-                        shadowColor: "#000",
-                        shadowOpacity: isSelected ? 0.12 : 0.05,
-                        shadowRadius: isSelected ? 10 : 6,
-                        shadowOffset: { width: 0, height: isSelected ? 3 : 2 },
-                        elevation: isSelected ? 3 : 1,
-                        opacity: pressed ? 0.85 : 1,
-                        transform: [{ translateY: pressed ? 1 : 0 }],
-                      })}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: "600",
-                          color: isSelected ? "#FFFFFF" : colors.foreground,
-                        }}
-                      >
-                        {item}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          )}
         </View>
       </ScrollView>
 
