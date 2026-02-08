@@ -4,8 +4,17 @@
  * React Native 앱에서 에러를 추적하고 Firebase Crashlytics에 보고합니다.
  */
 
-import crashlytics from '@react-native-firebase/crashlytics';
 import { Platform } from 'react-native';
+
+// Web에서는 crashlytics를 사용할 수 없으므로 조건부 import
+let crashlytics: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    crashlytics = require('@react-native-firebase/crashlytics').default;
+  } catch (error) {
+    console.warn('[Error Tracking] Firebase Crashlytics not available:', error);
+  }
+}
 
 /**
  * Crashlytics 초기화 여부 확인
