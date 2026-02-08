@@ -26,13 +26,22 @@ export default function FaceSelectScreen() {
   const synthesizeMutation = trpc.ai.synthesizeFace.useMutation();
 
   // Firebase에서 얼굴 풀 가져오기
-  const { data: facePoolData, isLoading: isFacePoolLoading } = trpc.ai.getFacePool.useQuery({
+  const { data: facePoolData, isLoading: isFacePoolLoading, error: facePoolError } = trpc.ai.getFacePool.useQuery({
     nationality: "korea",
     gender: gender as "male" | "female",
     style: style || "default",
+    limit: 20, // 최대 20개까지 가져오기
   });
 
-  const faces = facePoolData?.faces || [];
+  const faces = facePoolData || [];
+
+  // 디버깅 로그
+  console.log('[Face Select] Gender:', gender);
+  console.log('[Face Select] Style:', style);
+  console.log('[Face Select] Loading:', isFacePoolLoading);
+  console.log('[Face Select] Error:', facePoolError);
+  console.log('[Face Select] Faces count:', faces.length);
+  console.log('[Face Select] Faces data:', faces);
 
   const handleSelectFace = (faceId: string) => {
     if (Platform.OS !== "web") {
