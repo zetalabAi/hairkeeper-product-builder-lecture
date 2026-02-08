@@ -9,12 +9,35 @@
  * - Android: google-services.json
  */
 
-import auth, { type FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 const FIREBASE_TOKEN_KEY = "firebase_id_token";
 const FIREBASE_USER_KEY = "firebase_user";
+
+// 플랫폼별 Firebase Auth 가져오기
+let auth: any = null;
+let FirebaseAuthTypes: any = null;
+let webAuthModule: any = null;
+
+if (Platform.OS === 'web') {
+  try {
+    const { getAuth } = require('firebase/auth');
+    webAuthModule = require('firebase/auth');
+    auth = () => getAuth();
+    console.log('[Firebase Client] Firebase Web SDK 사용');
+  } catch (error) {
+    console.warn('[Firebase Client] Firebase Web SDK not available:', error);
+  }
+} else {
+  try {
+    auth = require('@react-native-firebase/auth').default;
+    FirebaseAuthTypes = require('@react-native-firebase/auth').FirebaseAuthTypes;
+    console.log('[Firebase Client] React Native Firebase 사용');
+  } catch (error) {
+    console.warn('[Firebase Client] React Native Firebase not available:', error);
+  }
+}
 
 export type FirebaseUser = {
   uid: string;
@@ -27,7 +50,8 @@ export type FirebaseUser = {
 /**
  * Get current Firebase user
  */
-export function getCurrentUser(): FirebaseAuthTypes.User | null {
+export function getCurrentUser(): any {
+  if (!auth) return null;
   return auth().currentUser;
 }
 
@@ -81,9 +105,18 @@ export async function getCachedFirebaseIdToken(): Promise<string | null> {
 export async function signInWithEmail(
   email: string,
   password: string
-): Promise<FirebaseAuthTypes.UserCredential> {
+): Promise<any> {
+  if (!auth) {
+    throw new Error('Firebase Auth not available');
+  }
+
   try {
-    const credential = await auth().signInWithEmailAndPassword(email, password);
+    let credential: any;
+    if (Platform.OS === 'web' && webAuthModule) {
+      credential = await webAuthModule.signInWithEmailAndPassword(auth(), email, password);
+    } else {
+      credential = await auth().signInWithEmailAndPassword(email, password);
+    }
     console.log("[Firebase Client] Email sign-in successful:", credential.user.uid);
     return credential;
   } catch (error) {
@@ -99,17 +132,36 @@ export async function createAccountWithEmail(
   email: string,
   password: string,
   displayName?: string
-): Promise<FirebaseAuthTypes.UserCredential> {
+): Promise<any> {
+  if (!auth) {
+    throw new Error('Firebase Auth not available');
+  }
+
   try {
-    const credential = await auth().createUserWithEmailAndPassword(email, password);
+    let credential: any;
+    if (Platform.OS === 'web' && webAuthModule) {
+      credential = await webAuthModule.createUserWithEmailAndPassword(auth(), email, password);
 
-    // Update profile with display name
-    if (displayName && credential.user) {
-      await credential.user.updateProfile({ displayName });
+      // Update profile with display name
+      if (displayName && credential.user) {
+        await webAuthModule.updateProfile(credential.user, { displayName });
+      }
+
+      // Send email verification
+      if (credential.user) {
+        await webAuthModule.sendEmailVerification(credential.user);
+      }
+    } else {
+      credential = await auth().createUserWithEmailAndPassword(email, password);
+
+      // Update profile with display name
+      if (displayName && credential.user) {
+        await credential.user.updateProfile({ displayName });
+      }
+
+      // Send email verification
+      await credential.user?.sendEmailVerification();
     }
-
-    // Send email verification
-    await credential.user?.sendEmailVerification();
 
     console.log("[Firebase Client] Account created:", credential.user.uid);
     return credential;
@@ -180,8 +232,16 @@ export async function signInWithApple(): Promise<FirebaseAuthTypes.UserCredentia
  * Sign out
  */
 export async function signOut(): Promise<void> {
+  if (!auth) {
+    throw new Error('Firebase Auth not available');
+  }
+
   try {
-    await auth().signOut();
+    if (Platform.OS === 'web' && webAuthModule) {
+      await webAuthModule.signOut(auth());
+    } else {
+      await auth().signOut();
+    }
 
     // Clear cached tokens
     if (Platform.OS !== "web") {
@@ -203,8 +263,16 @@ export async function signOut(): Promise<void> {
  * Send password reset email
  */
 export async function sendPasswordResetEmail(email: string): Promise<void> {
+  if (!auth) {
+    throw new Error('Firebase Auth not available');
+  }
+
   try {
-    await auth().sendPasswordResetEmail(email);
+    if (Platform.OS === 'web' && webAuthModule) {
+      await webAuthModule.sendPasswordResetEmail(auth(), email);
+    } else {
+      await auth().sendPasswordResetEmail(email);
+    }
     console.log("[Firebase Client] Password reset email sent to:", email);
   } catch (error) {
     console.error("[Firebase Client] Send password reset email failed:", error);
@@ -219,13 +287,21 @@ export async function updateUserProfile(update: {
   displayName?: string;
   photoURL?: string;
 }): Promise<void> {
+  if (!auth) {
+    throw new Error('Firebase Auth not available');
+  }
+
   try {
     const user = getCurrentUser();
     if (!user) {
       throw new Error("No user signed in");
     }
 
-    await user.updateProfile(update);
+    if (Platform.OS === 'web' && webAuthModule) {
+      await webAuthModule.updateProfile(user, update);
+    } else {
+      await user.updateProfile(update);
+    }
     console.log("[Firebase Client] Profile updated");
   } catch (error) {
     console.error("[Firebase Client] Update profile failed:", error);
@@ -237,14 +313,23 @@ export async function updateUserProfile(update: {
  * Update user email
  */
 export async function updateUserEmail(newEmail: string): Promise<void> {
+  if (!auth) {
+    throw new Error('Firebase Auth not available');
+  }
+
   try {
     const user = getCurrentUser();
     if (!user) {
       throw new Error("No user signed in");
     }
 
-    await user.updateEmail(newEmail);
-    await user.sendEmailVerification();
+    if (Platform.OS === 'web' && webAuthModule) {
+      await webAuthModule.updateEmail(user, newEmail);
+      await webAuthModule.sendEmailVerification(user);
+    } else {
+      await user.updateEmail(newEmail);
+      await user.sendEmailVerification();
+    }
     console.log("[Firebase Client] Email updated and verification sent");
   } catch (error) {
     console.error("[Firebase Client] Update email failed:", error);
@@ -256,13 +341,21 @@ export async function updateUserEmail(newEmail: string): Promise<void> {
  * Update user password
  */
 export async function updateUserPassword(newPassword: string): Promise<void> {
+  if (!auth) {
+    throw new Error('Firebase Auth not available');
+  }
+
   try {
     const user = getCurrentUser();
     if (!user) {
       throw new Error("No user signed in");
     }
 
-    await user.updatePassword(newPassword);
+    if (Platform.OS === 'web' && webAuthModule) {
+      await webAuthModule.updatePassword(user, newPassword);
+    } else {
+      await user.updatePassword(newPassword);
+    }
     console.log("[Firebase Client] Password updated");
   } catch (error) {
     console.error("[Firebase Client] Update password failed:", error);
@@ -277,14 +370,24 @@ export async function reauthenticateWithEmail(
   email: string,
   password: string
 ): Promise<void> {
+  if (!auth) {
+    throw new Error('Firebase Auth not available');
+  }
+
   try {
     const user = getCurrentUser();
     if (!user) {
       throw new Error("No user signed in");
     }
 
-    const credential = auth.EmailAuthProvider.credential(email, password);
-    await user.reauthenticateWithCredential(credential);
+    let credential: any;
+    if (Platform.OS === 'web' && webAuthModule) {
+      credential = webAuthModule.EmailAuthProvider.credential(email, password);
+      await webAuthModule.reauthenticateWithCredential(user, credential);
+    } else {
+      credential = auth.EmailAuthProvider.credential(email, password);
+      await user.reauthenticateWithCredential(credential);
+    }
     console.log("[Firebase Client] Re-authentication successful");
   } catch (error) {
     console.error("[Firebase Client] Re-authentication failed:", error);
@@ -296,13 +399,21 @@ export async function reauthenticateWithEmail(
  * Delete user account
  */
 export async function deleteUserAccount(): Promise<void> {
+  if (!auth) {
+    throw new Error('Firebase Auth not available');
+  }
+
   try {
     const user = getCurrentUser();
     if (!user) {
       throw new Error("No user signed in");
     }
 
-    await user.delete();
+    if (Platform.OS === 'web' && webAuthModule) {
+      await webAuthModule.deleteUser(user);
+    } else {
+      await user.delete();
+    }
     console.log("[Firebase Client] Account deleted");
   } catch (error) {
     console.error("[Firebase Client] Delete account failed:", error);
@@ -314,24 +425,42 @@ export async function deleteUserAccount(): Promise<void> {
  * Listen to auth state changes
  */
 export function onAuthStateChanged(
-  callback: (user: FirebaseAuthTypes.User | null) => void
+  callback: (user: any) => void
 ): () => void {
-  return auth().onAuthStateChanged(callback);
+  if (!auth) {
+    console.warn('[Firebase Client] Auth not available for onAuthStateChanged');
+    return () => {};
+  }
+
+  if (Platform.OS === 'web' && webAuthModule) {
+    return webAuthModule.onAuthStateChanged(auth(), callback);
+  } else {
+    return auth().onAuthStateChanged(callback);
+  }
 }
 
 /**
  * Listen to ID token changes (for refreshing tokens)
  */
 export function onIdTokenChanged(
-  callback: (user: FirebaseAuthTypes.User | null) => void
+  callback: (user: any) => void
 ): () => void {
-  return auth().onIdTokenChanged(callback);
+  if (!auth) {
+    console.warn('[Firebase Client] Auth not available for onIdTokenChanged');
+    return () => {};
+  }
+
+  if (Platform.OS === 'web' && webAuthModule) {
+    return webAuthModule.onIdTokenChanged(auth(), callback);
+  } else {
+    return auth().onIdTokenChanged(callback);
+  }
 }
 
 /**
  * Convert Firebase user to app user format
  */
-export function toAppUser(firebaseUser: FirebaseAuthTypes.User | null): FirebaseUser | null {
+export function toAppUser(firebaseUser: any): FirebaseUser | null {
   if (!firebaseUser) {
     return null;
   }

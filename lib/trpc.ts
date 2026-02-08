@@ -7,9 +7,26 @@
 import { createTRPCReact } from "@trpc/react-query";
 import { httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
-import auth from "@react-native-firebase/auth";
+import { Platform } from "react-native";
 import type { AppRouter } from "@/server/routers";
 import { getApiBaseUrl } from "@/constants/oauth";
+
+// 플랫폼별 Firebase Auth 가져오기
+let auth: any = null;
+if (Platform.OS === 'web') {
+  try {
+    const { getAuth } = require('firebase/auth');
+    auth = () => getAuth();
+  } catch (error) {
+    console.warn('[tRPC] Firebase Web SDK not available:', error);
+  }
+} else {
+  try {
+    auth = require('@react-native-firebase/auth').default;
+  } catch (error) {
+    console.warn('[tRPC] React Native Firebase not available:', error);
+  }
+}
 
 /**
  * tRPC React client for type-safe API calls.
@@ -24,6 +41,11 @@ export const trpc = createTRPCReact<AppRouter>();
  * Firebase ID 토큰 가져오기
  */
 async function getFirebaseIdToken(): Promise<string | null> {
+  if (!auth) {
+    console.log('[tRPC] Firebase Auth not available');
+    return null;
+  }
+
   try {
     const currentUser = auth().currentUser;
     if (!currentUser) {
