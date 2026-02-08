@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
-import { swapFaces } from "./_core/dzine-face-swap";
+import { swapFaces } from "./_core/dzine-face-swap-direct";
 import { storagePut, storageGet } from "./storage";
 import { firestoreGetFacesByFilter } from "./_core/firestore";
 import * as db from "./db";
@@ -105,9 +105,8 @@ export const appRouter = router({
           console.log("[synthesizeFace] Target image (고객 사진):", uploadResult.url);
 
           const faceSwapResult = await swapFaces({
-            swapImageUrl: input.selectedFaceUrl,    // 가상 인물 얼굴
-            targetImageUrl: uploadResult.url,        // 고객 원본 사진
-            numOutputs: 1,
+            sourceFaceUrl: input.selectedFaceUrl,    // 가상 인물 얼굴 (source)
+            targetImageUrl: uploadResult.url,        // 고객 원본 사진 (target)
             outputFormat: "webp",
           });
 

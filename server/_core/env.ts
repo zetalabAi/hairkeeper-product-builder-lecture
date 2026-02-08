@@ -20,4 +20,6 @@ export const ENV = {
   // AI Services
   ONEMIN_AI_API_KEY: process.env.ONEMIN_AI_API_KEY ?? "",
   REPLICATE_API_TOKEN: process.env.REPLICATE_API_TOKEN ?? "",
+  DZINE_AI_API_KEY: process.env.DZINE_AI_API_KEY ?? "",
+  DZINE_AI_API_SECRET: process.env.DZINE_AI_API_SECRET ?? "",
 };

@@ -6,45 +6,35 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Platform } from 'react-native';
-import { firebaseConfig, validateFirebaseConfig } from '../firebase.config';
+import { isFirebaseInitialized, getFirebaseAuth } from './_core/firebase-init';
 import * as Analytics from './analytics';
 import * as ErrorTracking from './error-tracking';
 
 // 플랫폼별 Firebase Auth 가져오기
 let auth: any = null;
 let FirebaseAuthTypes: any = null;
+let authModule: any = null;
 
 if (Platform.OS === 'web') {
-  // 웹: Firebase Web SDK 사용
+  // 웹: Firebase Web SDK 사용 (이미 firebase-init.ts에서 초기화됨)
   try {
-    const { initializeApp, getApps } = require('firebase/app');
-    const {
-      getAuth,
-      onAuthStateChanged,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      signOut: firebaseSignOut,
-      sendPasswordResetEmail,
-      updateProfile: firebaseUpdateProfile,
-      sendEmailVerification,
-    } = require('firebase/auth');
+    authModule = require('firebase/auth');
 
-    // Firebase 앱 초기화 (중복 초기화 방지)
-    if (getApps().length === 0) {
-      initializeApp(firebaseConfig);
-      console.log('[Auth Provider] Firebase Web SDK 초기화 완료');
-    }
+    // Web SDK용 auth wrapper - 이미 초기화된 auth 인스턴스 반환
+    auth = () => {
+      return getFirebaseAuth();
+    };
 
-    // Web SDK용 auth wrapper
-    const webAuth = getAuth();
-    auth = () => webAuth;
-    auth.signInWithEmailAndPassword = signInWithEmailAndPassword;
-    auth.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-    auth.signOut = firebaseSignOut;
-    auth.sendPasswordResetEmail = sendPasswordResetEmail;
-    auth.updateProfile = firebaseUpdateProfile;
-    auth.sendEmailVerification = sendEmailVerification;
-    auth.onAuthStateChanged = onAuthStateChanged;
+    // Auth 메서드들을 auth 객체에 추가
+    auth.signInWithEmailAndPassword = authModule.signInWithEmailAndPassword;
+    auth.createUserWithEmailAndPassword = authModule.createUserWithEmailAndPassword;
+    auth.signOut = authModule.signOut;
+    auth.sendPasswordResetEmail = authModule.sendPasswordResetEmail;
+    auth.updateProfile = authModule.updateProfile;
+    auth.sendEmailVerification = authModule.sendEmailVerification;
+    auth.onAuthStateChanged = authModule.onAuthStateChanged;
+
+    console.log('[Auth Provider] Firebase Web SDK configured');
   } catch (error) {
     console.warn('[Auth Provider] Firebase Web SDK not available:', error);
   }
@@ -118,12 +108,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Firebase 설정 검증
+  // Firebase 초기화 확인
   useEffect(() => {
-    if (!validateFirebaseConfig()) {
-      setError('Firebase 설정이 올바르지 않습니다. .env 파일을 확인해주세요.');
-      setLoading(false);
-      return;
+    if (Platform.OS === 'web' && !isFirebaseInitialized()) {
+      console.warn('[Auth Provider] Firebase not initialized on web');
+      // Don't set error - Firebase init will be retried
     }
   }, []);
 
@@ -141,7 +130,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (Platform.OS === 'web') {
       // Web SDK: onAuthStateChanged(auth, callback)
-      unsubscribe = auth.onAuthStateChanged(auth(), async (firebaseUser: any) => {
+      const authInstance = auth();
+      if (!authInstance) {
+        console.error('[Auth Provider] Failed to get auth instance');
+        setLoading(false);
+        return;
+      }
+
+      unsubscribe = auth.onAuthStateChanged(authInstance, async (firebaseUser: any) => {
         console.log('[Auth Provider] 인증 상태 변경:', firebaseUser?.uid || 'null');
         setUser(toAppUser(firebaseUser));
         setLoading(false);
