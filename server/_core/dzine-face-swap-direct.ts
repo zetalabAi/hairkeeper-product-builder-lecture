@@ -78,6 +78,11 @@ export interface DzineFaceSwapOutput {
 const BASE_URL = "https://papi.dzine.ai/openapi/v1";
 const MAX_POLL_ATTEMPTS = 60; // 60 attempts
 const POLL_INTERVAL_MS = 2000; // 2 seconds
+const REQUEST_TIMEOUT_MS = {
+  detect: 60000,
+  create: 60000,
+  poll: 15000,
+};
 
 // ==========================================
 // Helper Functions
@@ -110,6 +115,32 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Fetch with a hard timeout to avoid hanging requests.
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs: number
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error: any) {
+    if (error?.name === "AbortError") {
+      throw new Error(`Request timed out after ${timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 // ==========================================
 // API Functions
 // ==========================================
@@ -123,20 +154,24 @@ async function detectFaces(imageUrl: string): Promise<FaceCoordinate[]> {
 
   console.log("[Dzine Direct] Detecting faces in:", imageUrl);
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Authorization": apiKey,
-      "Content-Type": "application/json",
+  const response = await fetchWithTimeout(
+    url,
+    {
+      method: "POST",
+      headers: {
+        "Authorization": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        images: [
+          {
+            url: imageUrl,
+          },
+        ],
+      }),
     },
-    body: JSON.stringify({
-      images: [
-        {
-          url: imageUrl,
-        },
-      ],
-    }),
-  });
+    REQUEST_TIMEOUT_MS.detect
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -175,21 +210,26 @@ async function createFaceSwapTask(
 
   console.log("[Dzine Direct] Creating face swap task...");
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Authorization": apiKey,
-      "Content-Type": "application/json",
+  const response = await fetchWithTimeout(
+    url,
+    {
+      method: "POST",
+      headers: {
+        "Authorization": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        // Dzine API: source=원본사진, dest=교체될얼굴
+        source_face_image: targetImageUrl,        // 고객 원본 사진
+        dest_face_image: sourceFaceUrl,           // 가상 인물 얼굴
+        source_face_coordinate: targetFaceCoordinate,  // 고객 사진 좌표
+        dest_face_coordinate: sourceFaceCoordinate,    // 가상 인물 좌표
+        generate_slots: [1, 1, 1, 1], // Generate all 4 variations
+        output_format: outputFormat,
+      }),
     },
-    body: JSON.stringify({
-      source_face_image: sourceFaceUrl,
-      dest_face_image: targetImageUrl,
-      source_face_coordinate: sourceFaceCoordinate,
-      dest_face_coordinate: targetFaceCoordinate,
-      generate_slots: [1, 1, 1, 1], // Generate all 4 variations
-      output_format: outputFormat,
-    }),
-  });
+    REQUEST_TIMEOUT_MS.create
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -223,12 +263,16 @@ async function pollTaskStatus(taskId: string): Promise<string[]> {
   for (let attempt = 1; attempt <= MAX_POLL_ATTEMPTS; attempt++) {
     try {
       // GET request (not POST!)
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Authorization": apiKey,
+      const response = await fetchWithTimeout(
+        url,
+        {
+          method: "GET",
+          headers: {
+            "Authorization": apiKey,
+          },
         },
-      });
+        REQUEST_TIMEOUT_MS.poll
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
