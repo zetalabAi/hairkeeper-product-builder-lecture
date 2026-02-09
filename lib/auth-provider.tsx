@@ -6,7 +6,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Platform } from 'react-native';
-import { isFirebaseInitialized, getFirebaseAuth } from './_core/firebase-init';
+import { firebaseConfig } from '../firebase.config';
 import * as Analytics from './analytics';
 import * as ErrorTracking from './error-tracking';
 
@@ -14,30 +14,12 @@ import * as ErrorTracking from './error-tracking';
 let auth: any = null;
 let FirebaseAuthTypes: any = null;
 let authModule: any = null;
+let firebaseAuthInstance: any = null;
 
-if (Platform.OS === 'web') {
-  // 웹: Firebase Web SDK 사용 (이미 firebase-init.ts에서 초기화됨)
-  try {
-    authModule = require('firebase/auth');
-
-    // Web SDK용 auth wrapper - 이미 초기화된 auth 인스턴스 반환
-    auth = () => {
-      return getFirebaseAuth();
-    };
-
-    // Auth 메서드들을 auth 객체에 추가
-    auth.signInWithEmailAndPassword = authModule.signInWithEmailAndPassword;
-    auth.createUserWithEmailAndPassword = authModule.createUserWithEmailAndPassword;
-    auth.signOut = authModule.signOut;
-    auth.sendPasswordResetEmail = authModule.sendPasswordResetEmail;
-    auth.updateProfile = authModule.updateProfile;
-    auth.sendEmailVerification = authModule.sendEmailVerification;
-    auth.onAuthStateChanged = authModule.onAuthStateChanged;
-
-    console.log('[Auth Provider] Firebase Web SDK configured');
-  } catch (error) {
-    console.warn('[Auth Provider] Firebase Web SDK not available:', error);
-  }
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  // 웹: Firebase 비활성화 (Metro bundler 호환성 문제)
+  console.log('[Auth Provider] Firebase disabled on web - running without authentication');
+  // auth = null로 유지하여 인증 없이 작동
 } else {
   // 네이티브: React Native Firebase 사용
   try {
@@ -110,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Firebase 초기화 확인
   useEffect(() => {
-    if (Platform.OS === 'web' && !isFirebaseInitialized()) {
+    if (Platform.OS === 'web' && !firebaseAuthInstance) {
       console.warn('[Auth Provider] Firebase not initialized on web');
       // Don't set error - Firebase init will be retried
     }
