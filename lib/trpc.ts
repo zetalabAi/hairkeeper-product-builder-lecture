@@ -11,22 +11,8 @@ import { Platform } from "react-native";
 import type { AppRouter } from "@/server/routers";
 import { getApiBaseUrl } from "@/constants/oauth";
 
-// 플랫폼별 Firebase Auth 가져오기
-let auth: any = null;
-if (Platform.OS === 'web') {
-  try {
-    const { getAuth } = require('firebase/auth');
-    auth = () => getAuth();
-  } catch (error) {
-    console.warn('[tRPC] Firebase Web SDK not available:', error);
-  }
-} else {
-  try {
-    auth = require('@react-native-firebase/auth').default;
-  } catch (error) {
-    console.warn('[tRPC] React Native Firebase not available:', error);
-  }
-}
+// Firebase Auth 비활성화 (웹에서 인증 불필요)
+// publicProcedure를 사용하므로 Firebase 토큰이 필요 없음
 
 /**
  * tRPC React client for type-safe API calls.
@@ -39,28 +25,12 @@ export const trpc = createTRPCReact<AppRouter>();
 
 /**
  * Firebase ID 토큰 가져오기
+ *
+ * Firebase disabled on web - return null to allow unauthenticated requests
  */
 async function getFirebaseIdToken(): Promise<string | null> {
-  if (!auth) {
-    console.log('[tRPC] Firebase Auth not available');
-    return null;
-  }
-
-  try {
-    const currentUser = auth().currentUser;
-    if (!currentUser) {
-      console.log('[tRPC] 로그인하지 않은 사용자');
-      return null;
-    }
-
-    // Firebase ID 토큰 가져오기 (자동 갱신)
-    const token = await currentUser.getIdToken();
-    console.log('[tRPC] Firebase ID 토큰 가져오기 성공');
-    return token;
-  } catch (error) {
-    console.error('[tRPC] Firebase ID 토큰 가져오기 실패:', error);
-    return null;
-  }
+  // Firebase disabled on web - skip authentication
+  return null;
 }
 
 /**
@@ -79,12 +49,16 @@ export function createTRPCClient() {
           const token = await getFirebaseIdToken();
           return token ? { Authorization: `Bearer ${token}` } : {};
         },
-        // Custom fetch to include credentials for cookie-based auth
+        // Custom fetch with extended timeout for face synthesis (40-60 seconds)
         fetch(url, options) {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 seconds
+
           return fetch(url, {
             ...options,
             credentials: "include",
-          });
+            signal: controller.signal,
+          }).finally(() => clearTimeout(timeoutId));
         },
       }),
     ],
