@@ -68,7 +68,7 @@ export const appRouter = router({
         const userId = input.userId || ctx.user?.id || 1; // Default to 1 if no user
 
         try {
-          projectId = await createProject({
+          projectId = await db.createProject({
             userId,
             originalImageUrl: "base64-encoded", // Placeholder since we're using Base64
             status: "processing",
@@ -105,20 +105,58 @@ export const appRouter = router({
           console.log("[synthesizeFace] Target image (고객 사진):", uploadResult.url);
 
           const faceSwapResult = await swapFaces({
-            sourceFaceUrl: input.selectedFaceUrl,    // 가상 인물 얼굴 (source)
-            targetImageUrl: uploadResult.url,        // 고객 원본 사진 (target)
-            outputFormat: "webp",
+            // sourceFaceUrl: 가상 인물 얼굴 (교체될 얼굴)
+            // targetImageUrl: 고객 원본 사진 (베이스 이미지)
+            sourceFaceUrl: input.selectedFaceUrl,  // 가상 인물 얼굴
+            targetImageUrl: uploadResult.url,      // 고객 원본 사진
+            outputFormat: "jpeg",
           });
 
           console.log("[synthesizeFace] Face swap completed!");
           console.log("[synthesizeFace] Result URLs:", faceSwapResult.resultUrls);
 
-          const resultImageUrl = faceSwapResult.resultUrls[0];
+          const dzineResultUrl = faceSwapResult.resultUrls[0];
+
+          // Step 3.5: Re-host result image to GCS to avoid hotlink/CORS issues
+          console.log("[synthesizeFace] Step 3.5: Rehosting result image to GCS...");
+          console.log("[synthesizeFace] Dzine result URL:", dzineResultUrl);
+          let resultImageUrl = dzineResultUrl;
+          try {
+            const response = await fetch(dzineResultUrl, {
+              headers: {
+                "User-Agent": "hairkeeper-server/1.0",
+                "Accept": "image/*,*/*;q=0.8",
+              },
+            });
+            console.log("[synthesizeFace] Fetch response status:", response.status);
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`Failed to download Dzine result: ${response.status} ${errorText}`);
+            }
+
+            const contentType = response.headers.get("content-type") || "image/jpeg";
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            console.log("[synthesizeFace] Downloaded image:", buffer.length, "bytes, type:", contentType);
+
+            const extension = contentType.includes("webp")
+              ? "webp"
+              : contentType.includes("png")
+              ? "png"
+              : "jpg";
+
+            const resultKey = `results/${userId}/${timestamp}-${randomId}.${extension}`;
+            const uploadedResult = await storagePut(resultKey, buffer, contentType);
+            resultImageUrl = uploadedResult.url;
+            console.log("[synthesizeFace] ✓ Successfully rehosted to GCS:", resultImageUrl);
+          } catch (rehydrateError) {
+            console.warn("[synthesizeFace] ✗ Failed to rehost result image, using Dzine URL:", rehydrateError);
+          }
 
           // Step 4: Update project record with result (status: completed)
           if (projectId) {
             try {
-              await updateProject(projectId, {
+              await db.updateProject(projectId, {
                 originalImageUrl: uploadResult.url,
                 resultImageUrl,
                 status: "completed",
@@ -141,7 +179,7 @@ export const appRouter = router({
           // Step 5: Update project record with error (status: failed)
           if (projectId) {
             try {
-              await updateProject(projectId, {
+              await db.updateProject(projectId, {
                 status: "failed",
                 errorMessage: error?.message || "Unknown error",
               });
