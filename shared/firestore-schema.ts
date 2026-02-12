@@ -318,6 +318,49 @@ export type CreateFirestoreUsageLog = Omit<FirestoreUsageLog, "id" | "createdAt"
 };
 
 // ============================================
+// Beta Feedback Collection: /betaFeedback/{feedbackId}
+// ============================================
+
+export interface FirestoreBetaFeedback {
+  /** Feedback ID */
+  id: string;
+
+  /** Firebase UID of the user */
+  userId: string;
+
+  /** User email */
+  userEmail: string | null;
+
+  /** Quantitative ratings (1-5) */
+  swapAccuracy: number;
+  processingSpeed: number;
+  facePoolDiversity: number;
+  batchProcessingValue: number;
+  overallSatisfaction: number;
+  subscriptionIntent: number;
+
+  /** Qualitative feedback */
+  bestFeature: string;
+  worstFeature: string;
+  suggestions: string;
+
+  /** Device information */
+  deviceInfo: {
+    platform: string;
+    os: string;
+    appVersion: string;
+  } | null;
+
+  /** Creation timestamp */
+  createdAt: Timestamp;
+}
+
+export type CreateFirestoreBetaFeedback = Omit<FirestoreBetaFeedback, "id" | "createdAt"> & {
+  id?: string;
+  createdAt?: Timestamp;
+};
+
+// ============================================
 // Helper Types
 // ============================================
 

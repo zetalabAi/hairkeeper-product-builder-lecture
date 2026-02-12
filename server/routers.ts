@@ -5,7 +5,7 @@ import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
 import { swapFaces } from "./_core/dzine-face-swap-direct";
 import { storagePut, storageGet } from "./storage";
-import { firestoreGetFacesByFilter } from "./_core/firestore";
+import { firestoreGetFacesByFilter, firestoreCreateBetaFeedback } from "./_core/firestore";
 import * as db from "./db";
 
 export const appRouter = router({
@@ -263,6 +263,49 @@ export const appRouter = router({
         const userId = input.userId || ctx.user?.id || 1;
         const projects = await getUserProjects(userId);
         return projects;
+      }),
+  }),
+  beta: router({
+    // Submit beta feedback
+    submitFeedback: publicProcedure
+      .input(
+        z.object({
+          // Quantitative ratings (1-5)
+          swapAccuracy: z.number().min(1).max(5),
+          processingSpeed: z.number().min(1).max(5),
+          facePoolDiversity: z.number().min(1).max(5),
+          batchProcessingValue: z.number().min(1).max(5),
+          overallSatisfaction: z.number().min(1).max(5),
+          subscriptionIntent: z.number().min(1).max(5),
+          // Qualitative feedback
+          bestFeature: z.string(),
+          worstFeature: z.string(),
+          suggestions: z.string(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const userId = ctx.user?.id?.toString() || "anonymous";
+        const userEmail = ctx.user?.email || null;
+
+        // Create beta feedback in Firestore
+        await firestoreCreateBetaFeedback({
+          userId,
+          userEmail,
+          swapAccuracy: input.swapAccuracy,
+          processingSpeed: input.processingSpeed,
+          facePoolDiversity: input.facePoolDiversity,
+          batchProcessingValue: input.batchProcessingValue,
+          overallSatisfaction: input.overallSatisfaction,
+          subscriptionIntent: input.subscriptionIntent,
+          bestFeature: input.bestFeature,
+          worstFeature: input.worstFeature,
+          suggestions: input.suggestions,
+          deviceInfo: null, // TODO: Collect device info from client
+        });
+
+        console.log("[Beta Feedback] Feedback submitted by user:", userId);
+
+        return { success: true };
       }),
   }),
 });

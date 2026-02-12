@@ -26,6 +26,8 @@ import type {
   UpdateFirestoreModelPerformance,
   FirestoreUsageLog,
   CreateFirestoreUsageLog,
+  FirestoreBetaFeedback,
+  CreateFirestoreBetaFeedback,
   OpenIdMapping,
 } from "../../shared/firestore-schema";
 
@@ -625,6 +627,39 @@ export async function firestoreGetUserUsageStats(
     return querySnapshot.docs.map((doc) => doc.data() as FirestoreUsageLog);
   } catch (error) {
     console.error("[Firestore] Error getting user usage stats:", error);
+    throw error;
+  }
+}
+
+// ============================================
+// Beta Feedback Operations
+// ============================================
+
+/**
+ * Create beta feedback
+ */
+export async function firestoreCreateBetaFeedback(
+  feedback: CreateFirestoreBetaFeedback
+): Promise<string> {
+  try {
+    const db = getFirestoreDb();
+    const now = Timestamp.now();
+
+    const docRef = feedback.id
+      ? db.collection("betaFeedback").doc(feedback.id)
+      : db.collection("betaFeedback").doc();
+
+    const feedbackData: FirestoreBetaFeedback = {
+      id: docRef.id,
+      ...feedback,
+      createdAt: feedback.createdAt || now,
+    };
+
+    await docRef.set(feedbackData);
+    console.log("[Firestore] Beta feedback created:", docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error("[Firestore] Error creating beta feedback:", error);
     throw error;
   }
 }
