@@ -9,6 +9,7 @@ import * as Haptics from "expo-haptics";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { prepareImageForUpload } from "@/lib/upload-image";
+import { optimizeImage } from "@/lib/image-optimizer";
 
 export default function FaceSelectScreen() {
   const params = useLocalSearchParams();
@@ -70,13 +71,23 @@ export default function FaceSelectScreen() {
       // Use actual GCS URL for Dzine AI API
       const selectedFaceUrl = selectedFace.imageUrl;
 
-      // Prepare original image as Base64
-      console.log("Starting image preparation...");
+      // Optimize image before upload
+      console.log("Starting image optimization...");
       console.log("Original imageUri:", imageUri);
+      setProgress(5);
+      setProgressMessage("이미지 최적화 중...");
+
+      const optimizedUri = await optimizeImage(imageUri, {
+        maxWidth: 1080,
+        quality: 0.85,
+      });
+      console.log("Image optimized:", optimizedUri);
+
+      // Prepare optimized image as Base64
       setProgress(10);
       setProgressMessage("이미지 인코딩 중...");
-      
-      const imageData = await prepareImageForUpload(imageUri);
+
+      const imageData = await prepareImageForUpload(optimizedUri);
       console.log("Image data prepared, filename:", imageData.filename);
       setProgress(30);
       setProgressMessage("AI 합성 시작...");
