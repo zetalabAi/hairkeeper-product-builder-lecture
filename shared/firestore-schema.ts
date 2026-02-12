@@ -188,6 +188,12 @@ export interface FirestoreFacePool {
   /** Gender category */
   gender: "male" | "female";
 
+  /** Age group category */
+  ageGroup: "20s" | "30s" | "40s" | "50s" | "60s";
+
+  /** Skin tone category */
+  skinTone: "light" | "medium" | "dark";
+
   /** Style category */
   style: string;
 
