@@ -1,0 +1,13 @@
+# 남성 (5장)
+male_20s_light_01.jpg
+male_30s_light_02.jpg
+male_40s_medium_03.jpg
+male_50s_medium_04.jpg
+male_60s_dark_05.jpg
+
+# 여성 (5장)
+female_20s_light_01.jpg
+female_30s_light_02.jpg
+female_40s_medium_03.jpg
+female_50s_medium_04.jpg
+female_60s_dark_05.jpg
