@@ -10,16 +10,33 @@ import * as Sharing from "expo-sharing";
 import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system/legacy";
 import { useState, useRef } from "react";
+import { downloadResultsAsZip } from "@/lib/download-zip";
 
 export default function ResultScreen() {
   const params = useLocalSearchParams();
   const originalImageUri = params.originalImageUri as string;
   const resultImageUri = params.resultImageUri as string;
+  const resultImageUrlsParam = params.resultImageUrls as string | undefined;
+  const projectIdParam = params.projectId as string | undefined;
   const description = params.description as string;
   const colors = useColors();
 
   const [showBefore, setShowBefore] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const sliderPosition = useRef(new Animated.Value(0)).current;
+  const resultImageUrls = (() => {
+    if (!resultImageUrlsParam) {
+      return resultImageUri ? [resultImageUri] : [];
+    }
+    try {
+      const parsed = JSON.parse(resultImageUrlsParam);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  })();
+  const projectId = projectIdParam || "batch";
 
   const handleToggle = () => {
     if (Platform.OS !== "web") {
@@ -81,6 +98,21 @@ export default function ResultScreen() {
     }
   };
 
+  const handleDownloadZip = async () => {
+    if (isDownloading || resultImageUrls.length <= 1) return;
+
+    setIsDownloading(true);
+    try {
+      await downloadResultsAsZip(resultImageUrls, projectId);
+      alert("ZIP 다운로드가 완료되었습니다.");
+    } catch (error) {
+      console.error("ZIP download error:", error);
+      alert("ZIP 다운로드에 실패했습니다.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const handleNewProject = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -114,7 +146,40 @@ export default function ResultScreen() {
             source={{ uri: showBefore ? originalImageUri : resultImageUri }}
             style={{ width: "100%", height: "100%" }}
             resizeMode="cover"
+            onLoad={() => setImageError(null)}
+            onError={(event) => {
+              const errorMessage =
+                event?.nativeEvent?.error || "이미지 로드 실패";
+              console.error("[Result] Image load error:", errorMessage);
+              console.error("[Result] Result image URL:", resultImageUri);
+              setImageError(errorMessage);
+            }}
           />
+          {imageError && !showBefore && (
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                alignItems: "center",
+                justifyContent: "center",
+                paddingHorizontal: 24,
+                backgroundColor: colors.surface,
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.muted,
+                  textAlign: "center",
+                  lineHeight: 20,
+                }}
+              >
+                결과 이미지를 불러오지 못했습니다.
+              </Text>
+            </View>
+          )}
           {/* Label Badge */}
           <View
             style={{
@@ -183,6 +248,18 @@ export default function ResultScreen() {
             iconPosition="left"
             onPress={handleSave}
           />
+          {resultImageUrls.length > 1 && (
+            <Button
+              label={isDownloading ? "다운로드 중..." : "ZIP 다운로드"}
+              variant="secondary"
+              size="large"
+              fullWidth
+              icon="archive"
+              iconPosition="left"
+              disabled={isDownloading}
+              onPress={handleDownloadZip}
+            />
+          )}
           <View style={{ flexDirection: "row", gap: 12 }}>
             <View style={{ flex: 1 }}>
               <Button
