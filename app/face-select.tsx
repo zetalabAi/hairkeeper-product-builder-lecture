@@ -97,6 +97,10 @@ export default function FaceSelectScreen() {
       setProgress(40);
       setProgressMessage("얼굴 합성 중... (약 30초 소요)");
       
+      // TODO: Premium user detection
+      // const isPremiumUser = user?.isPremium || false;
+      const isPremiumUser = false; // Default: free user
+
       const result = await synthesizeMutation.mutateAsync({
         originalImageBase64: imageData.base64Data,
         selectedFaceUrl,
@@ -104,6 +108,8 @@ export default function FaceSelectScreen() {
         gender,
         style,
         userId: 1,
+        quality: isPremiumUser ? "high" : "balanced", // Premium: high quality, Free: balanced
+        priority: isPremiumUser, // Premium users get priority processing
       });
       console.log("Face Swap API result:", result);
       console.log("Result image URL:", result?.resultImageUrl);

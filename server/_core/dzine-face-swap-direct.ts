@@ -58,6 +58,12 @@ export interface DzineFaceSwapInput {
 
   /** Output format: "webp" or "jpeg" */
   outputFormat?: "webp" | "jpeg";
+
+  /** Quality mode: "high" (30-35s), "balanced" (20-25s), "fast" (15-20s) */
+  quality?: "high" | "balanced" | "fast";
+
+  /** Priority processing for premium users */
+  priority?: boolean;
 }
 
 export interface DzineFaceSwapOutput {
@@ -203,7 +209,9 @@ async function createFaceSwapTask(
   targetImageUrl: string,
   sourceFaceCoordinate: FaceCoordinate,
   targetFaceCoordinate: FaceCoordinate,
-  outputFormat: "webp" | "jpeg" = "webp"
+  outputFormat: "webp" | "jpeg" = "webp",
+  quality: "high" | "balanced" | "fast" = "balanced",
+  priority: boolean = false
 ): Promise<string> {
   const apiKey = getApiKey();
   const url = `${BASE_URL}/create_task_face_swap`;
@@ -226,6 +234,8 @@ async function createFaceSwapTask(
         dest_face_coordinate: sourceFaceCoordinate,    // 가상 인물 좌표
         generate_slots: [1, 1, 1, 1], // Generate all 4 variations
         output_format: outputFormat,
+        quality, // Quality mode: high/balanced/fast
+        priority, // Priority processing for premium users
       }),
     },
     REQUEST_TIMEOUT_MS.create
@@ -376,7 +386,9 @@ export async function swapFaces(
       input.targetImageUrl,
       sourceFaceCoordinate,
       targetFaceCoordinate,
-      input.outputFormat || "webp"
+      input.outputFormat || "webp",
+      input.quality || "balanced",
+      input.priority || false
     );
 
     // Step 4: Poll for results using GET request
