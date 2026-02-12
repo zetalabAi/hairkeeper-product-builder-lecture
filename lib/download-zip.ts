@@ -1,5 +1,4 @@
 import JSZip from "jszip";
-import { Platform } from "react-native";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
@@ -42,18 +41,6 @@ export async function downloadResultsAsZip(imageUrls: string[], projectId: strin
 
     const zipBlob = await zip.generateAsync({ type: "blob" });
     const zipFileName = `hairkeeper_${projectId}.zip`;
-
-    if (Platform.OS === "web") {
-      const blobUrl = URL.createObjectURL(zipBlob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = zipFileName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(blobUrl);
-      return;
-    }
 
     const base64 = await blobToBase64(zipBlob);
     const fileUri = FileSystem.cacheDirectory + zipFileName;
