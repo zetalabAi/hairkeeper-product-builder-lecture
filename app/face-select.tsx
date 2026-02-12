@@ -12,6 +12,7 @@ import { prepareImageForUpload } from "@/lib/upload-image";
 
 export default function FaceSelectScreen() {
   const params = useLocalSearchParams();
+  // TODO: 배치 처리 지원 - imageUris 파라미터 처리 추가 필요
   const imageUri = params.imageUri as string;
   const nationality = params.nationality as string;
   const gender = params.gender as string;
@@ -94,6 +95,7 @@ export default function FaceSelectScreen() {
         userId: 1,
       });
       console.log("Face Swap API result:", result);
+      console.log("Result image URL:", result?.resultImageUrl);
       setProgress(100);
       setProgressMessage("합성 완료!");
 
