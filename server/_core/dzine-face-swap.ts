@@ -28,6 +28,12 @@ export interface DzineFaceSwapInput {
 
   /** Output format: "webp" or "jpeg" */
   outputFormat?: "webp" | "jpeg";
+
+  /** Quality mode: "high" (30-35s), "balanced" (20-25s), "fast" (15-20s) */
+  quality?: "high" | "balanced" | "fast";
+
+  /** Priority processing for premium users */
+  priority?: boolean;
 }
 
 export interface DzineFaceSwapOutput {
@@ -52,6 +58,8 @@ interface OneminAIRequest {
     targetImageUrl: string;
     n: number;
     output_format: string;
+    quality?: string;
+    priority?: boolean;
   };
 }
 
@@ -167,6 +175,8 @@ export async function swapFaces(
       targetImageUrl: input.targetImageUrl,
       n: input.numOutputs || 1,
       output_format: input.outputFormat || "webp",
+      quality: input.quality || "balanced",
+      priority: input.priority || false,
     },
   };
 

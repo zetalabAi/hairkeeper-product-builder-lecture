@@ -33,7 +33,8 @@ import { firestoreCreateFace } from "../server/_core/firestore";
 // Configuration
 // ==========================================
 
-const FACES_DIR = "./faces"; // 얼굴 이미지가 있는 로컬 폴더
+const FACES_DIR = "./faces"; // 기존 단일 폴더 형식 (하위호환)
+const FACE_POOL_KOREA_DIR = "./face-pool-temp/korea"; // 현재 사용 중인 폴더 구조
 const GCS_PREFIX = "face-pool"; // GCS에 저장할 경로 prefix
 
 // ==========================================
@@ -47,40 +48,205 @@ const GCS_PREFIX = "face-pool"; // GCS에 저장할 경로 prefix
 function parseFileName(fileName: string): {
   nationality: "korea" | "japan";
   gender: "male" | "female";
+  ageGroup: "20s" | "30s" | "40s" | "50s" | "60s";
+  skinTone: "light" | "medium" | "dark";
   style: string;
   number: string;
 } | null {
+  // Format A: korea-male-default-01.jpg
   const baseName = path.basename(fileName, path.extname(fileName));
-  const parts = baseName.split("-");
+  const dashParts = baseName.split("-");
+  if (dashParts.length >= 4) {
+    const [nationality, gender, style, number] = dashParts;
 
-  if (parts.length < 4) {
-    console.warn(`⚠️  Invalid file name format: ${fileName}`);
-    console.warn(`   Expected format: {nationality}-{gender}-{style}-{number}.jpg`);
-    return null;
+    // Validate nationality
+    if (nationality !== "korea" && nationality !== "japan") {
+      console.warn(`⚠️  Invalid nationality: ${nationality} (must be "korea" or "japan")`);
+      return null;
+    }
+
+    // Validate gender
+    if (gender !== "male" && gender !== "female") {
+      console.warn(`⚠️  Invalid gender: ${gender} (must be "male" or "female")`);
+      return null;
+    }
+
+    return {
+      nationality: nationality as "korea" | "japan",
+      gender: gender as "male" | "female",
+      // Old format has no age/skin fields. Use stable defaults.
+      ageGroup: "30s",
+      skinTone: "medium",
+      style,
+      number,
+    };
   }
 
-  const [nationality, gender, style, number] = parts;
-
-  // Validate nationality
-  if (nationality !== "korea" && nationality !== "japan") {
-    console.warn(`⚠️  Invalid nationality: ${nationality} (must be "korea" or "japan")`);
-    return null;
+  // Format B: male_20s_light_01.png (face-pool-temp/korea/{gender}/)
+  const underscoreParts = baseName.split("_");
+  if (underscoreParts.length === 4) {
+    const [gender, ageGroup, skinTone, number] = underscoreParts;
+    if (gender !== "male" && gender !== "female") {
+      console.warn(`⚠️  Invalid gender: ${gender} (must be "male" or "female")`);
+      return null;
+    }
+    if (!["20s", "30s", "40s", "50s", "60s"].includes(ageGroup)) {
+      console.warn(`⚠️  Invalid age group: ${ageGroup}`);
+      return null;
+    }
+    if (!["light", "medium", "dark"].includes(skinTone)) {
+      console.warn(`⚠️  Invalid skin tone: ${skinTone}`);
+      return null;
+    }
+    return {
+      nationality: "korea",
+      gender: gender as "male" | "female",
+      ageGroup: ageGroup as "20s" | "30s" | "40s" | "50s" | "60s",
+      skinTone: skinTone as "light" | "medium" | "dark",
+      style: "default",
+      number,
+    };
   }
 
-  // Validate gender
-  if (gender !== "male" && gender !== "female") {
-    console.warn(`⚠️  Invalid gender: ${gender} (must be "male" or "female")`);
-    return null;
-  }
-
-  return {
-    nationality: nationality as "korea" | "japan",
-    gender: gender as "male" | "female",
-    style,
-    number,
-  };
+  console.warn(`⚠️  Invalid file name format: ${fileName}`);
+  console.warn("   Supported formats:");
+  console.warn("   - {nationality}-{gender}-{style}-{number}.jpg");
+  console.warn("   - {gender}_{ageGroup}_{skinTone}_{number}.png");
+  return null;
 }
 
+function isImageFile(fileName: string): boolean {
+  const ext = path.extname(fileName).toLowerCase();
+  return ext === ".jpg" || ext === ".jpeg" || ext === ".png";
+}
+
+function collectImageFiles(): string[] {
+  // Prefer current structure: ./face-pool-temp/korea/{female,male}/*.png
+  if (fs.existsSync(FACE_POOL_KOREA_DIR)) {
+    const dirs = fs
+      .readdirSync(FACE_POOL_KOREA_DIR, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory() && (entry.name === "male" || entry.name === "female"));
+
+    const files: string[] = [];
+    for (const dir of dirs) {
+      const absDir = path.join(FACE_POOL_KOREA_DIR, dir.name);
+      const images = fs
+        .readdirSync(absDir)
+        .filter((file) => isImageFile(file))
+        .map((file) => path.join(absDir, file));
+      files.push(...images);
+    }
+    return files;
+  }
+
+  // Backward compatible: ./faces/*.jpg
+  if (fs.existsSync(FACES_DIR)) {
+    return fs
+      .readdirSync(FACES_DIR)
+      .filter((file) => isImageFile(file))
+      .map((file) => path.join(FACES_DIR, file));
+  }
+
+  return [];
+}
+
+function printMissingDirectoryGuide() {
+  console.error(`❌ Source directory not found.`);
+  console.error("");
+  console.error("Use one of these structures:");
+  console.error(`   1) ${FACE_POOL_KOREA_DIR}/{female,male}/*.png`);
+  console.error(`   2) ${FACES_DIR}/*.jpg`);
+  console.error("");
+  console.error("File naming format:");
+  console.error("   - {gender}_{ageGroup}_{skinTone}_{number}.png");
+  console.error("   - {nationality}-{gender}-{style}-{number}.jpg");
+}
+
+function printNoFilesGuide() {
+  console.error("❌ No image files found.");
+  console.error("");
+  console.error("Add files to one of these directories:");
+  console.error(`   - ${FACE_POOL_KOREA_DIR}/female`);
+  console.error(`   - ${FACE_POOL_KOREA_DIR}/male`);
+  console.error(`   - ${FACES_DIR}`);
+  console.error("");
+  console.error("File naming format:");
+  console.error("   - {gender}_{ageGroup}_{skinTone}_{number}.png");
+  console.error("   - {nationality}-{gender}-{style}-{number}.jpg");
+}
+
+// ==========================================
+// Main Function
+// ==========================================
+
+async function main() {
+  console.log("=================================================");
+  console.log("📸 Face Pool Upload Script");
+  console.log("=================================================\n");
+
+  // Step 1: Find source directory
+  if (!fs.existsSync(FACE_POOL_KOREA_DIR) && !fs.existsSync(FACES_DIR)) {
+    printMissingDirectoryGuide();
+    process.exit(1);
+  }
+
+  // Step 2: Get all image files
+  const filePaths = collectImageFiles();
+  const files = filePaths.map((filePath) => path.basename(filePath));
+
+  if (filePaths.length === 0) {
+    printNoFilesGuide();
+    process.exit(1);
+  }
+
+  console.log(`📋 Found ${filePaths.length} image(s) to upload:\n`);
+  files.forEach((file, index) => {
+    console.log(`   ${index + 1}. ${file}`);
+  });
+  console.log("");
+
+  // Step 3: Confirm before upload
+  console.log("⚠️  This will upload all images to GCS and create Firestore records.");
+  console.log("   Make sure your Firebase credentials are configured correctly.");
+  console.log("");
+
+  // Step 4: Upload each image
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (const filePath of filePaths) {
+    try {
+      await uploadFaceImage(filePath);
+      successCount++;
+    } catch (error) {
+      errorCount++;
+    }
+  }
+
+  // Step 5: Summary
+  console.log("");
+  console.log("=================================================");
+  console.log("📊 Upload Summary");
+  console.log("=================================================");
+  console.log(`   Total files: ${filePaths.length}`);
+  console.log(`   ✅ Successful: ${successCount}`);
+  console.log(`   ❌ Failed: ${errorCount}`);
+  console.log("");
+
+  if (errorCount === 0) {
+    console.log("🎉 All images uploaded successfully!");
+    console.log("");
+    console.log("Next steps:");
+    console.log("   1. Verify images in Firebase Console:");
+    console.log("      - Storage: https://console.firebase.google.com/project/_/storage");
+    console.log("      - Firestore: https://console.firebase.google.com/project/_/firestore");
+    console.log("   2. Test the getFacePool API");
+    console.log("   3. Test face swap with real images");
+  } else {
+    console.error("⚠️  Some uploads failed. Please check the errors above.");
+    process.exit(1);
+  }
+}
 /**
  * 이미지 파일을 GCS에 업로드하고 Firestore에 메타데이터 저장
  */
@@ -97,6 +263,8 @@ async function uploadFaceImage(filePath: string): Promise<void> {
     console.log(`\n📤 Uploading: ${fileName}`);
     console.log(`   Nationality: ${metadata.nationality}`);
     console.log(`   Gender: ${metadata.gender}`);
+    console.log(`   Age Group: ${metadata.ageGroup}`);
+    console.log(`   Skin Tone: ${metadata.skinTone}`);
     console.log(`   Style: ${metadata.style}`);
 
     // Step 1: Read image file
@@ -121,6 +289,8 @@ async function uploadFaceImage(filePath: string): Promise<void> {
       imageUrl: uploadResult.url,
       nationality: metadata.nationality,
       gender: metadata.gender,
+      ageGroup: metadata.ageGroup,
+      skinTone: metadata.skinTone,
       style: metadata.style,
       faceType: null,
       embedding: null,
@@ -136,99 +306,6 @@ async function uploadFaceImage(filePath: string): Promise<void> {
   }
 }
 
-// ==========================================
-// Main Function
-// ==========================================
-
-async function main() {
-  console.log("=================================================");
-  console.log("📸 Face Pool Upload Script");
-  console.log("=================================================\n");
-
-  // Step 1: Check if faces directory exists
-  if (!fs.existsSync(FACES_DIR)) {
-    console.error(`❌ Faces directory not found: ${FACES_DIR}`);
-    console.error("");
-    console.error("Please create the directory and add face images:");
-    console.error("   mkdir faces");
-    console.error("   # Add images to faces/ folder");
-    console.error("");
-    console.error("File naming format:");
-    console.error("   {nationality}-{gender}-{style}-{number}.jpg");
-    console.error("");
-    console.error("Examples:");
-    console.error("   faces/korea-male-modern-01.jpg");
-    console.error("   faces/korea-female-elegant-01.jpg");
-    console.error("   faces/japan-male-casual-01.jpg");
-    console.error("");
-    process.exit(1);
-  }
-
-  // Step 2: Get all image files
-  const files = fs.readdirSync(FACES_DIR).filter((file) => {
-    const ext = path.extname(file).toLowerCase();
-    return ext === ".jpg" || ext === ".jpeg" || ext === ".png";
-  });
-
-  if (files.length === 0) {
-    console.error("❌ No image files found in faces/ directory");
-    console.error("");
-    console.error("Please add face images with the correct naming format:");
-    console.error("   {nationality}-{gender}-{style}-{number}.jpg");
-    console.error("");
-    process.exit(1);
-  }
-
-  console.log(`📋 Found ${files.length} image(s) to upload:\n`);
-  files.forEach((file, index) => {
-    console.log(`   ${index + 1}. ${file}`);
-  });
-  console.log("");
-
-  // Step 3: Confirm before upload
-  console.log("⚠️  This will upload all images to GCS and create Firestore records.");
-  console.log("   Make sure your Firebase credentials are configured correctly.");
-  console.log("");
-
-  // Step 4: Upload each image
-  let successCount = 0;
-  let errorCount = 0;
-
-  for (const file of files) {
-    const filePath = path.join(FACES_DIR, file);
-
-    try {
-      await uploadFaceImage(filePath);
-      successCount++;
-    } catch (error) {
-      errorCount++;
-    }
-  }
-
-  // Step 5: Summary
-  console.log("");
-  console.log("=================================================");
-  console.log("📊 Upload Summary");
-  console.log("=================================================");
-  console.log(`   Total files: ${files.length}`);
-  console.log(`   ✅ Successful: ${successCount}`);
-  console.log(`   ❌ Failed: ${errorCount}`);
-  console.log("");
-
-  if (errorCount === 0) {
-    console.log("🎉 All images uploaded successfully!");
-    console.log("");
-    console.log("Next steps:");
-    console.log("   1. Verify images in Firebase Console:");
-    console.log("      - Storage: https://console.firebase.google.com/project/_/storage");
-    console.log("      - Firestore: https://console.firebase.google.com/project/_/firestore");
-    console.log("   2. Test the getFacePool API");
-    console.log("   3. Test face swap with real images");
-  } else {
-    console.error("⚠️  Some uploads failed. Please check the errors above.");
-    process.exit(1);
-  }
-}
 
 // Run the script
 main().catch((error) => {

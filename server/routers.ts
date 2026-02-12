@@ -60,8 +60,6 @@ export const appRouter = router({
           gender: z.string(),
           style: z.string(),
           userId: z.number().optional(), // Optional: user ID for saving to DB
-          quality: z.enum(["high", "balanced", "fast"]).optional(), // Quality mode
-          priority: z.boolean().optional(), // Priority processing for premium users
         })
       )
       .mutation(async ({ input, ctx }) => {
@@ -112,8 +110,6 @@ export const appRouter = router({
             sourceFaceUrl: input.selectedFaceUrl,  // 가상 인물 얼굴
             targetImageUrl: uploadResult.url,      // 고객 원본 사진
             outputFormat: "jpeg",
-            quality: input.quality || "balanced",
-            priority: input.priority || false,
           });
 
           console.log("[synthesizeFace] Face swap completed!");

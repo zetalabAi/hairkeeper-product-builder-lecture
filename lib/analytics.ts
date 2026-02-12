@@ -20,7 +20,6 @@ if (Platform.OS !== 'web') {
  * Analytics 초기화 여부
  */
 let isInitialized = false;
-
 /**
  * Analytics 초기화
  */
