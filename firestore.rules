@@ -90,6 +90,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Beta Feedback collection
+    match /betaFeedback/{feedbackId} {
+      // Only admins can read feedback
+      allow read: if false; // Use Admin SDK for analytics
+
+      // Authenticated users can submit feedback
+      allow create: if isAuthenticated();
+
+      // No updates or deletes
+      allow update, delete: if false;
+    }
+
     // OpenId mapping (legacy)
     match /openIdMapping/{openId} {
       // Only server can read/write
