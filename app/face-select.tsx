@@ -10,6 +10,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { prepareImageForUpload } from "@/lib/upload-image";
 import { optimizeImage } from "@/lib/image-optimizer";
+import { usePreloadImages } from "@/lib/use-preload-images";
 
 export default function FaceSelectScreen() {
   const params = useLocalSearchParams();
@@ -37,6 +38,10 @@ export default function FaceSelectScreen() {
 
   const faces = facePoolData || [];
 
+  // Preload face pool images
+  const imageUrls = faces.map((f) => f.imageUrl);
+  const { loaded: imagesLoaded, progress: preloadProgress } = usePreloadImages(imageUrls);
+
   // 디버깅 로그
   console.log('[Face Select] Gender:', gender);
   console.log('[Face Select] Style:', style);
@@ -44,6 +49,7 @@ export default function FaceSelectScreen() {
   console.log('[Face Select] Error:', facePoolError);
   console.log('[Face Select] Faces count:', faces.length);
   console.log('[Face Select] Faces data:', faces);
+  console.log('[Face Select] Images preloaded:', imagesLoaded, 'Progress:', preloadProgress);
 
   const handleSelectFace = (faceId: string) => {
     if (Platform.OS !== "web") {
@@ -141,6 +147,62 @@ export default function FaceSelectScreen() {
       setIsProcessing(false);
     }
   };
+
+  // Image preloading overlay
+  if (isFacePoolLoading || !imagesLoaded) {
+    return (
+      <ScreenContainer className="bg-background">
+        <SubScreenHeader title="얼굴 선택" />
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 24,
+          }}
+        >
+          {/* Loading Animation */}
+          <View
+            style={{
+              width: 120,
+              height: 120,
+              borderRadius: 60,
+              backgroundColor: colors.primary + "20",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 32,
+            }}
+          >
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+
+          {/* Loading Text */}
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "700",
+              color: colors.foreground,
+              marginBottom: 12,
+              textAlign: "center",
+            }}
+          >
+            {isFacePoolLoading ? "얼굴 풀 로딩 중..." : "이미지 준비 중..."}
+          </Text>
+
+          {/* Progress */}
+          <Text
+            style={{
+              fontSize: 16,
+              color: colors.muted,
+              textAlign: "center",
+            }}
+          >
+            {Math.round(preloadProgress * 100)}%
+          </Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   // Loading overlay
   if (isProcessing) {
