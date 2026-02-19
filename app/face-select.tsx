@@ -1,7 +1,6 @@
 import { View, Text, FlatList, Platform, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
-import { SubScreenHeader } from "@/components/sub-screen-header";
 import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { TabSwitch } from "@/components/ui/tab-switch";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { FaceGridItem } from "@/components/ui/face-grid-item";
 import * as Haptics from "expo-haptics";
+import { BG_PINK, COLOR_PRIMARY, COLOR_PRIMARY_LIGHT } from "@/constants/colors";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { prepareImageForUpload } from "@/lib/upload-image";
@@ -129,48 +129,44 @@ export default function FaceSelectScreen() {
   // Processing overlay
   if (isProcessing) {
     return (
-      <ScreenContainer className="bg-background">
-        <SubScreenHeader title="얼굴 합성 중" />
+      <ScreenContainer style={{ backgroundColor: BG_PINK }}>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
-          <Text
-            style={{
-              fontSize: 52,
-              fontWeight: "800",
-              color: "#9C27B0",
-              marginBottom: 8,
-            }}
-          >
+          <Text style={{ fontSize: 64, marginBottom: 8 }}>⏳</Text>
+          <Text style={{ fontSize: 56, fontWeight: "800", color: COLOR_PRIMARY, marginBottom: 4 }}>
             {Math.round(progress)}%
           </Text>
-          <Text
-            style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 8, textAlign: "center" }}
-          >
+          <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 6, textAlign: "center" }}>
             AI가 얼굴을 합성 중...
           </Text>
-          <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 32, textAlign: "center" }}>
+          <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 28, textAlign: "center" }}>
             {progressMessage}
           </Text>
-          <View style={{ width: "100%" }}>
+          <View style={{ width: "100%", marginBottom: 12 }}>
             <ProgressBar progress={progress} />
           </View>
+          <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 32 }}>예상 시간: 약 20초</Text>
 
           {/* Tip Card */}
           <View
             style={{
-              marginTop: 40,
-              backgroundColor: "#9C27B020",
-              borderWidth: 1,
-              borderColor: "#9C27B040",
+              backgroundColor: "#FFFFFF",
+              borderLeftWidth: 4,
+              borderLeftColor: COLOR_PRIMARY,
               borderRadius: 16,
               padding: 16,
               width: "100%",
+              shadowColor: "#000",
+              shadowOpacity: 0.06,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: 2,
             }}
           >
-            <Text style={{ fontSize: 13, color: "#9C27B0", fontWeight: "600", marginBottom: 4 }}>
-              💡 Tip
+            <Text style={{ fontSize: 13, color: COLOR_PRIMARY, fontWeight: "700", marginBottom: 6 }}>
+              💡 알고 계셨나요?
             </Text>
             <Text style={{ fontSize: 13, color: colors.foreground, lineHeight: 20 }}>
-              매일 5장씩 작업하면 포트폴리오가 빠르게 쌓여요!
+              HairKeeper는 머리카락을 100% 보존합니다.{"\n"}얼굴만 교체하여 자연스러운 결과를 제공해요!
             </Text>
           </View>
         </View>
@@ -181,23 +177,22 @@ export default function FaceSelectScreen() {
   // Loading face pool
   if (isFacePoolLoading || !imagesLoaded) {
     return (
-      <ScreenContainer className="bg-background">
-        <SubScreenHeader title="얼굴 선택" />
+      <ScreenContainer style={{ backgroundColor: BG_PINK }}>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
           <View
             style={{
               width: 80,
               height: 80,
               borderRadius: 40,
-              backgroundColor: "#9C27B020",
+              backgroundColor: COLOR_PRIMARY_LIGHT,
               alignItems: "center",
               justifyContent: "center",
-              marginBottom: 24,
+              marginBottom: 20,
             }}
           >
-            <ActivityIndicator size="large" color="#9C27B0" />
+            <ActivityIndicator size="large" color={COLOR_PRIMARY} />
           </View>
-          <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
+          <Text style={{ fontSize: 17, fontWeight: "700", color: colors.foreground, marginBottom: 6 }}>
             {isFacePoolLoading ? "얼굴 풀 로딩 중..." : "이미지 준비 중..."}
           </Text>
           <Text style={{ fontSize: 14, color: colors.muted }}>
@@ -209,22 +204,34 @@ export default function FaceSelectScreen() {
   }
 
   return (
-    <ScreenContainer className="bg-background">
-      <SubScreenHeader title="얼굴 선택" />
+    <ScreenContainer style={{ backgroundColor: "#FFFFFF" }}>
+      {/* Header */}
+      <View style={{ paddingHorizontal: 24, paddingTop: 56, paddingBottom: 8 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Pressable
+              onPress={() => router.back()}
+              style={({ pressed }) => ({
+                width: 40, height: 40, borderRadius: 20,
+                backgroundColor: COLOR_PRIMARY_LIGHT, alignItems: "center", justifyContent: "center",
+                marginRight: 12, opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <Ionicons name="arrow-back" size={20} color={COLOR_PRIMARY} />
+            </Pressable>
+            <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground }}>얼굴 선택</Text>
+          </View>
+          <View style={{ backgroundColor: COLOR_PRIMARY_LIGHT, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: COLOR_PRIMARY }}>2 / 3</Text>
+          </View>
+        </View>
+        <Text style={{ fontSize: 13, color: colors.muted, marginLeft: 52 }}>원하는 얼굴을 골라주세요</Text>
+      </View>
 
-      <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 8 }}>
-        {/* Step indicator */}
-        <Text style={{ fontSize: 13, color: colors.muted, textAlign: "right", marginBottom: 12 }}>
-          2 / 3 단계
-        </Text>
-
+      <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 16 }}>
         {/* Gender Tab */}
         <View style={{ marginBottom: 20 }}>
-          <TabSwitch
-            tabs={GENDER_TABS}
-            activeTab={activeGender}
-            onTabChange={handleGenderChange}
-          />
+          <TabSwitch tabs={GENDER_TABS} activeTab={activeGender} onTabChange={handleGenderChange} />
         </View>
 
         {/* Face Grid */}
@@ -246,7 +253,7 @@ export default function FaceSelectScreen() {
             keyExtractor={(item) => item.id}
             numColumns={3}
             columnWrapperStyle={{ gap: 12 }}
-            contentContainerStyle={{ gap: 12, paddingBottom: 100 }}
+            contentContainerStyle={{ gap: 12, paddingBottom: 110 }}
             renderItem={({ item }) => (
               <FaceGridItem
                 imageUrl={item.imageUrl}
@@ -258,7 +265,7 @@ export default function FaceSelectScreen() {
         )}
       </View>
 
-      {/* Bottom Button */}
+      {/* Bottom CTA */}
       <View
         style={{
           position: "absolute",
@@ -266,11 +273,11 @@ export default function FaceSelectScreen() {
           left: 0,
           right: 0,
           paddingHorizontal: 24,
-          paddingBottom: 24,
+          paddingBottom: 28,
           paddingTop: 16,
-          backgroundColor: colors.background,
+          backgroundColor: "#FFFFFF",
           borderTopWidth: 1,
-          borderTopColor: colors.border + "40",
+          borderTopColor: "#F3E5F5",
         }}
       >
         <Button
