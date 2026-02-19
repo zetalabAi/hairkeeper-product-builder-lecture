@@ -1,0 +1,21 @@
+{
+  "home": {
+    "greeting": "こんにちは、デザイナーさん！",
+    "subtitle": "今日も素晴らしい仕事を",
+    "startWork": "作業を始める",
+    "recentWork": "最近の作業",
+    "more": "もっと見る",
+    "emptyHistory": "まだ作業履歴がありません。\n最初のプロジェクトを始めましょう！",
+    "banner": {
+      "title": "AIで5分で完成",
+      "subtitle": "髪型はそのまま、顔だけ交換",
+      "cta": "今すぐ始める →"
+    },
+    "menu": {
+      "photoSelect": "写真を選択",
+      "results": "結果",
+      "favorites": "お気に入り",
+      "statistics": "統計"
+    }
+  }
+}

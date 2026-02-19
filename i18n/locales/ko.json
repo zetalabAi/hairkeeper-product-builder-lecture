@@ -1,0 +1,21 @@
+{
+  "home": {
+    "greeting": "안녕하세요 디자이너님!",
+    "subtitle": "오늘도 멋진 작업 하세요",
+    "startWork": "작업 시작하기",
+    "recentWork": "최근 작업",
+    "more": "더보기",
+    "emptyHistory": "아직 작업 기록이 없습니다.\n첫 프로젝트를 시작해보세요!",
+    "banner": {
+      "title": "AI로 5분만에 완성",
+      "subtitle": "머리는 보존, 얼굴만 교체",
+      "cta": "지금 시작하기 →"
+    },
+    "menu": {
+      "photoSelect": "사진 선택",
+      "results": "결과물",
+      "favorites": "즐겨찾기",
+      "statistics": "통계"
+    }
+  }
+}

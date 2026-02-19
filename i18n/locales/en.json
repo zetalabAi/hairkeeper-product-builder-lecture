@@ -1,0 +1,21 @@
+{
+  "home": {
+    "greeting": "Hello Designer!",
+    "subtitle": "Have a great day at work",
+    "startWork": "Start Working",
+    "recentWork": "Recent Work",
+    "more": "More",
+    "emptyHistory": "No work history yet.\nStart your first project!",
+    "banner": {
+      "title": "Done in 5 minutes with AI",
+      "subtitle": "Keep the hair, swap the face",
+      "cta": "Start Now →"
+    },
+    "menu": {
+      "photoSelect": "Select Photo",
+      "results": "Results",
+      "favorites": "Favorites",
+      "statistics": "Statistics"
+    }
+  }
+}
