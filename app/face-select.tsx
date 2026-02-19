@@ -1,10 +1,13 @@
-import { View, Text, FlatList, Image, Pressable, Platform, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, Platform, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { SubScreenHeader } from "@/components/sub-screen-header";
 import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
+import { TabSwitch } from "@/components/ui/tab-switch";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { FaceGridItem } from "@/components/ui/face-grid-item";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -12,15 +15,21 @@ import { prepareImageForUpload } from "@/lib/upload-image";
 import { optimizeImage } from "@/lib/image-optimizer";
 import { usePreloadImages } from "@/lib/use-preload-images";
 
+const GENDER_TABS = [
+  { key: "male", label: "남성" },
+  { key: "female", label: "여성" },
+];
+
 export default function FaceSelectScreen() {
   const params = useLocalSearchParams();
-  // TODO: 배치 처리 지원 - imageUris 파라미터 처리 추가 필요
   const imageUri = params.imageUri as string;
   const nationality = params.nationality as string;
-  const gender = params.gender as string;
   const style = params.style as string;
   const colors = useColors();
 
+  const [activeGender, setActiveGender] = useState<string>(
+    (params.gender as string) || "male"
+  );
   const [selectedFaceId, setSelectedFaceId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -28,28 +37,22 @@ export default function FaceSelectScreen() {
 
   const synthesizeMutation = trpc.ai.synthesizeFace.useMutation();
 
-  // Firebase에서 얼굴 풀 가져오기
-  const { data: facePoolData, isLoading: isFacePoolLoading, error: facePoolError } = trpc.ai.getFacePool.useQuery({
-    nationality: "korea",
-    gender: gender as "male" | "female",
-    style: style || "default",
-    limit: 20, // 최대 20개까지 가져오기
-  });
+  const { data: facePoolData, isLoading: isFacePoolLoading, error: facePoolError } =
+    trpc.ai.getFacePool.useQuery({
+      nationality: "korea",
+      gender: activeGender as "male" | "female",
+      style: style || "default",
+      limit: 20,
+    });
 
   const faces = facePoolData || [];
-
-  // Preload face pool images
   const imageUrls = faces.map((f) => f.imageUrl);
   const { loaded: imagesLoaded, progress: preloadProgress } = usePreloadImages(imageUrls);
 
-  // 디버깅 로그
-  console.log('[Face Select] Gender:', gender);
-  console.log('[Face Select] Style:', style);
-  console.log('[Face Select] Loading:', isFacePoolLoading);
-  console.log('[Face Select] Error:', facePoolError);
-  console.log('[Face Select] Faces count:', faces.length);
-  console.log('[Face Select] Faces data:', faces);
-  console.log('[Face Select] Images preloaded:', imagesLoaded, 'Progress:', preloadProgress);
+  const handleGenderChange = (key: string) => {
+    setActiveGender(key);
+    setSelectedFaceId(null);
+  };
 
   const handleSelectFace = (faceId: string) => {
     if (Platform.OS !== "web") {
@@ -70,59 +73,40 @@ export default function FaceSelectScreen() {
     setProgressMessage("이미지 준비 중...");
 
     try {
-      // Get selected face image with GCS URL
       const selectedFace = faces.find((f) => f.id === selectedFaceId);
       if (!selectedFace) return;
 
-      // Use actual GCS URL for Dzine AI API
       const selectedFaceUrl = selectedFace.imageUrl;
 
-      // Optimize image before upload
-      console.log("Starting image optimization...");
-      console.log("Original imageUri:", imageUri);
       setProgress(5);
       setProgressMessage("이미지 최적화 중...");
+      const optimizedUri = await optimizeImage(imageUri, { maxWidth: 1080, quality: 0.85 });
 
-      const optimizedUri = await optimizeImage(imageUri, {
-        maxWidth: 1080,
-        quality: 0.85,
-      });
-      console.log("Image optimized:", optimizedUri);
-
-      // Prepare optimized image as Base64
       setProgress(10);
       setProgressMessage("이미지 인코딩 중...");
-
       const imageData = await prepareImageForUpload(optimizedUri);
-      console.log("Image data prepared, filename:", imageData.filename);
+
       setProgress(30);
       setProgressMessage("AI 합성 시작...");
-
-      // Call AI synthesis API with selected face
-      console.log("Calling Face Swap API with Base64 image");
       setProgress(40);
       setProgressMessage("얼굴 합성 중... (약 30초 소요)");
-      
-      // TODO: Premium user detection
-      // const isPremiumUser = user?.isPremium || false;
-      const isPremiumUser = false; // Default: free user
+
+      const isPremiumUser = false;
 
       const result = await synthesizeMutation.mutateAsync({
         originalImageBase64: imageData.base64Data,
         selectedFaceUrl,
         nationality: "한국인",
-        gender,
+        gender: activeGender,
         style,
         userId: 1,
-        quality: isPremiumUser ? "high" : "balanced", // Premium: high quality, Free: balanced
-        priority: isPremiumUser, // Premium users get priority processing
+        quality: isPremiumUser ? "high" : "balanced",
+        priority: isPremiumUser,
       });
-      console.log("Face Swap API result:", result);
-      console.log("Result image URL:", result?.resultImageUrl);
+
       setProgress(100);
       setProgressMessage("합성 완료!");
 
-      // Navigate to result screen with synthesized image
       router.push({
         pathname: "/result" as any,
         params: {
@@ -130,73 +114,93 @@ export default function FaceSelectScreen() {
           resultImageUri: result.resultImageUrl,
           description: result.description,
           nationality: "한국인",
-          gender,
+          gender: activeGender,
           style,
         },
       });
     } catch (error: any) {
-      console.error("\n========== CLIENT FACE SYNTHESIS ERROR ==========");
-      console.error("Error:", error);
-      console.error("Error message:", error?.message);
-      console.error("Error name:", error?.name);
-      console.error("Error data:", error?.data);
-      console.error("Full error:", JSON.stringify(error, null, 2));
-      console.error("=================================================\n");
-      alert(`얼굴 합성에 실패했습니다.\n오류: ${error?.message || '알 수 없는 오류'}`);
+      console.error("[Face Select] Error:", error?.message);
+      alert(`얼굴 합성에 실패했습니다.\n오류: ${error?.message || "알 수 없는 오류"}`);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Image preloading overlay
+  // Processing overlay
+  if (isProcessing) {
+    return (
+      <ScreenContainer className="bg-background">
+        <SubScreenHeader title="얼굴 합성 중" />
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+          <Text
+            style={{
+              fontSize: 52,
+              fontWeight: "800",
+              color: "#A855F7",
+              marginBottom: 8,
+            }}
+          >
+            {Math.round(progress)}%
+          </Text>
+          <Text
+            style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 8, textAlign: "center" }}
+          >
+            AI가 얼굴을 합성 중...
+          </Text>
+          <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 32, textAlign: "center" }}>
+            {progressMessage}
+          </Text>
+          <View style={{ width: "100%" }}>
+            <ProgressBar progress={progress} />
+          </View>
+
+          {/* Tip Card */}
+          <View
+            style={{
+              marginTop: 40,
+              backgroundColor: "#A855F720",
+              borderWidth: 1,
+              borderColor: "#A855F740",
+              borderRadius: 16,
+              padding: 16,
+              width: "100%",
+            }}
+          >
+            <Text style={{ fontSize: 13, color: "#A855F7", fontWeight: "600", marginBottom: 4 }}>
+              💡 Tip
+            </Text>
+            <Text style={{ fontSize: 13, color: colors.foreground, lineHeight: 20 }}>
+              매일 5장씩 작업하면 포트폴리오가 빠르게 쌓여요!
+            </Text>
+          </View>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  // Loading face pool
   if (isFacePoolLoading || !imagesLoaded) {
     return (
       <ScreenContainer className="bg-background">
         <SubScreenHeader title="얼굴 선택" />
-        <View
-          style={{
-            flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            paddingHorizontal: 24,
-          }}
-        >
-          {/* Loading Animation */}
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
           <View
             style={{
-              width: 120,
-              height: 120,
-              borderRadius: 60,
-              backgroundColor: colors.primary + "20",
+              width: 80,
+              height: 80,
+              borderRadius: 40,
+              backgroundColor: "#A855F720",
               alignItems: "center",
               justifyContent: "center",
-              marginBottom: 32,
+              marginBottom: 24,
             }}
           >
-            <ActivityIndicator size="large" color={colors.primary} />
+            <ActivityIndicator size="large" color="#A855F7" />
           </View>
-
-          {/* Loading Text */}
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: "700",
-              color: colors.foreground,
-              marginBottom: 12,
-              textAlign: "center",
-            }}
-          >
+          <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
             {isFacePoolLoading ? "얼굴 풀 로딩 중..." : "이미지 준비 중..."}
           </Text>
-
-          {/* Progress */}
-          <Text
-            style={{
-              fontSize: 16,
-              color: colors.muted,
-              textAlign: "center",
-            }}
-          >
+          <Text style={{ fontSize: 14, color: colors.muted }}>
             {Math.round(preloadProgress * 100)}%
           </Text>
         </View>
@@ -204,130 +208,37 @@ export default function FaceSelectScreen() {
     );
   }
 
-  // Loading overlay
-  if (isProcessing) {
-    return (
-      <ScreenContainer className="bg-background">
-        <SubScreenHeader title="얼굴 합성 중" />
-        <View
-          style={{
-            flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            paddingHorizontal: 24,
-          }}
-        >
-          {/* Loading Animation */}
-          <View
-            style={{
-              width: 120,
-              height: 120,
-              borderRadius: 60,
-              backgroundColor: colors.primary + "20",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: 32,
-            }}
-          >
-            <ActivityIndicator size="large" color={colors.primary} />
-          </View>
-
-          {/* Loading Text */}
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: "700",
-              color: colors.foreground,
-              marginBottom: 12,
-              textAlign: "center",
-            }}
-          >
-            AI가 얼굴을 합성하는 중...
-          </Text>
-          <Text
-            style={{
-              fontSize: 15,
-              color: colors.muted,
-              textAlign: "center",
-              lineHeight: 22,
-            }}
-          >
-            {progressMessage}
-          </Text>
-
-          {/* Progress Indicator */}
-          <View
-            style={{
-              marginTop: 40,
-              width: "100%",
-              maxWidth: 280,
-            }}
-          >
-            <View
-              style={{
-                height: 4,
-                backgroundColor: colors.surface,
-                borderRadius: 2,
-                overflow: "hidden",
-              }}
-            >
-              <View
-                style={{
-                  height: "100%",
-                  width: `${progress}%`,
-                  backgroundColor: colors.primary,
-                  borderRadius: 2,
-                }}
-              />
-            </View>
-          </View>
-        </View>
-      </ScreenContainer>
-    );
-  }
-
   return (
     <ScreenContainer className="bg-background">
-      {/* Header */}
       <SubScreenHeader title="얼굴 선택" />
 
-      {/* Content */}
       <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 8 }}>
-        {/* Info Card */}
-        <View
-          style={{
-            backgroundColor: colors.primary + "15",
-            borderRadius: 16,
-            padding: 16,
-            marginBottom: 20,
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
-          <Ionicons name="information-circle" size={24} color={colors.primary} />
-          <Text
-            style={{
-              flex: 1,
-              marginLeft: 12,
-              fontSize: 14,
-              color: colors.foreground,
-              lineHeight: 20,
-            }}
-          >
-            한국인 {gender === "male" ? "남성" : "여성"} - {style} 스타일
-          </Text>
+        {/* Step indicator */}
+        <Text style={{ fontSize: 13, color: colors.muted, textAlign: "right", marginBottom: 12 }}>
+          2 / 3 단계
+        </Text>
+
+        {/* Gender Tab */}
+        <View style={{ marginBottom: 20 }}>
+          <TabSwitch
+            tabs={GENDER_TABS}
+            activeTab={activeGender}
+            onTabChange={handleGenderChange}
+          />
         </View>
 
         {/* Face Grid */}
-        {isFacePoolLoading ? (
+        {facePoolError ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={{ marginTop: 16, color: colors.muted }}>얼굴 이미지 불러오는 중...</Text>
+            <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
+            <Text style={{ marginTop: 12, color: colors.muted, textAlign: "center" }}>
+              얼굴 이미지를 불러오지 못했습니다
+            </Text>
           </View>
         ) : faces.length === 0 ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
             <Ionicons name="images-outline" size={48} color={colors.muted} />
-            <Text style={{ marginTop: 16, color: colors.muted }}>사용 가능한 얼굴이 없습니다</Text>
+            <Text style={{ marginTop: 12, color: colors.muted }}>사용 가능한 얼굴이 없습니다</Text>
           </View>
         ) : (
           <FlatList
@@ -336,43 +247,13 @@ export default function FaceSelectScreen() {
             numColumns={3}
             columnWrapperStyle={{ gap: 12 }}
             contentContainerStyle={{ gap: 12, paddingBottom: 100 }}
-            renderItem={({ item }) => {
-              const isSelected = selectedFaceId === item.id;
-              return (
-                <Pressable
-                  onPress={() => handleSelectFace(item.id)}
-                  style={({ pressed }) => ({
-                    flex: 1,
-                    aspectRatio: 0.75,
-                    borderRadius: 16,
-                    overflow: "hidden",
-                    borderWidth: isSelected ? 3 : 0,
-                    borderColor: colors.primary,
-                    opacity: pressed ? 0.85 : 1,
-                    transform: [{ scale: pressed ? 0.97 : 1 }],
-                  })}
-                >
-                  <Image source={{ uri: item.imageUrl }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
-                  {isSelected && (
-                    <View
-                      style={{
-                        position: "absolute",
-                        top: 8,
-                        right: 8,
-                        width: 28,
-                        height: 28,
-                        borderRadius: 14,
-                        backgroundColor: colors.primary,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                    </View>
-                  )}
-                </Pressable>
-              );
-            }}
+            renderItem={({ item }) => (
+              <FaceGridItem
+                imageUrl={item.imageUrl}
+                selected={selectedFaceId === item.id}
+                onPress={() => handleSelectFace(item.id)}
+              />
+            )}
           />
         )}
       </View>
@@ -393,13 +274,11 @@ export default function FaceSelectScreen() {
         }}
       >
         <Button
-          label="합성 시작"
+          label="얼굴 스왑 시작 ✨"
           variant="primary"
           size="large"
           fullWidth
           disabled={!selectedFaceId || isProcessing}
-          icon="arrow-forward"
-          iconPosition="right"
           onPress={handleNext}
         />
       </View>
