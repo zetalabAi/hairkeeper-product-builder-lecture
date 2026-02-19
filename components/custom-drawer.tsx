@@ -18,9 +18,9 @@ const ANIMATION_DURATION = 240;
 
 const MENU_ITEMS = [
   { icon: "home-outline" as const, label: "홈", route: "/(tabs)" },
-  { icon: "images-outline" as const, label: "갤러리", route: "/photo-select" },
-  { icon: "star-outline" as const, label: "즐겨찾기", route: "/history" },
-  { icon: "stats-chart-outline" as const, label: "사용 통계", route: "/history" },
+  { icon: "images-outline" as const, label: "결과물", route: "/results" },
+  { icon: "star-outline" as const, label: "즐겨찾기", route: "/favorites" },
+  { icon: "stats-chart-outline" as const, label: "사용 통계", route: "/statistics" },
   { icon: "settings-outline" as const, label: "설정", route: "/settings" },
   { icon: "help-circle-outline" as const, label: "도움말", route: "/help" },
   { icon: "mail-outline" as const, label: "문의하기", route: "/contact" },

@@ -10,9 +10,9 @@ import { useDrawer } from "@/lib/drawer-context";
 
 const ACTION_BUTTONS = [
   { icon: "camera", label: "사진 선택", route: "/photo-select" },
-  { icon: "images", label: "갤러리", route: "/photo-select" },
-  { icon: "star", label: "즐겨찾기", route: "/history" },
-  { icon: "bar-chart", label: "통계", route: "/history" },
+  { icon: "images", label: "결과물", route: "/results" },
+  { icon: "star", label: "즐겨찾기", route: "/favorites" },
+  { icon: "bar-chart", label: "통계", route: "/statistics" },
 ] as const;
 
 export default function HomeScreen() {
