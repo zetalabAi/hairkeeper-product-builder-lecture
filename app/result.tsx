@@ -1,10 +1,10 @@
 import { View, Text, Pressable, Platform, Animated, Image } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
-import { SubScreenHeader } from "@/components/sub-screen-header";
 import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
+import { BG_PINK, COLOR_PRIMARY, COLOR_PRIMARY_LIGHT, COLOR_PRIMARY_BORDER } from "@/constants/colors";
 import * as Haptics from "expo-haptics";
 import * as Sharing from "expo-sharing";
 import * as MediaLibrary from "expo-media-library";
@@ -121,9 +121,40 @@ export default function ResultScreen() {
   };
 
   return (
-    <ScreenContainer className="bg-background">
+    <ScreenContainer style={{ backgroundColor: BG_PINK }}>
       {/* Header */}
-      <SubScreenHeader title="결과 확인" />
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: 24,
+          paddingTop: 56,
+          paddingBottom: 12,
+        }}
+      >
+        <Pressable
+          onPress={() => router.back()}
+          style={({ pressed }) => ({
+            width: 44, height: 44, borderRadius: 22,
+            backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center",
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Ionicons name="arrow-back" size={22} color={COLOR_PRIMARY} />
+        </Pressable>
+        <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground }}>결과 확인</Text>
+        <Pressable
+          onPress={handleShare}
+          style={({ pressed }) => ({
+            width: 44, height: 44, borderRadius: 22,
+            backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center",
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Ionicons name="share-outline" size={22} color={COLOR_PRIMARY} />
+        </Pressable>
+      </View>
 
       {/* Content */}
       <View className="flex-1 justify-center px-6">
@@ -133,9 +164,9 @@ export default function ResultScreen() {
             aspectRatio: 3 / 4,
             borderRadius: 24,
             backgroundColor: colors.surface,
-            marginBottom: 24,
+            marginBottom: 20,
             overflow: "hidden",
-            shadowColor: "#000",
+            shadowColor: COLOR_PRIMARY,
             shadowOpacity: 0.15,
             shadowRadius: 20,
             shadowOffset: { width: 0, height: 8 },
@@ -186,68 +217,45 @@ export default function ResultScreen() {
               position: "absolute",
               top: 16,
               left: 16,
-              backgroundColor: showBefore ? colors.muted : colors.primary,
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-              borderRadius: 12,
+              backgroundColor: showBefore ? colors.muted : COLOR_PRIMARY,
+              paddingHorizontal: 14,
+              paddingVertical: 7,
+              borderRadius: 20,
             }}
           >
-            <Text
-              style={{
-                fontSize: 13,
-                fontWeight: "700",
-                color: "#FFFFFF",
-              }}
-            >
+            <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>
               {showBefore ? "Before" : "After"}
             </Text>
           </View>
         </View>
 
-        {/* Toggle Button */}
+        {/* Toggle */}
         <Pressable
           onPress={handleToggle}
           style={({ pressed }) => ({
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            paddingVertical: 12,
+            paddingVertical: 11,
             paddingHorizontal: 20,
-            borderRadius: 20,
-            backgroundColor: colors.surface,
-            marginBottom: 24,
+            borderRadius: 24,
+            backgroundColor: "#FFFFFF",
+            marginBottom: 20,
             alignSelf: "center",
-            shadowColor: "#000",
-            shadowOpacity: 0.08,
-            shadowRadius: 8,
-            shadowOffset: { width: 0, height: 2 },
-            elevation: 2,
-            opacity: pressed ? 0.85 : 1,
-            transform: [{ translateY: pressed ? 1 : 0 }],
+            borderWidth: 1.5,
+            borderColor: COLOR_PRIMARY_BORDER,
+            opacity: pressed ? 0.8 : 1,
           })}
         >
-          <Ionicons
-            name="swap-horizontal"
-            size={20}
-            color={colors.primary}
-            style={{ marginRight: 8 }}
-          />
-          <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
+          <Ionicons name="swap-horizontal" size={18} color={COLOR_PRIMARY} style={{ marginRight: 6 }} />
+          <Text style={{ fontSize: 14, fontWeight: "600", color: COLOR_PRIMARY }}>
             {showBefore ? "After 보기" : "Before 보기"}
           </Text>
         </Pressable>
 
         {/* Action Buttons */}
         <View style={{ gap: 12 }}>
-          <Button
-            label="갤러리에 저장"
-            variant="primary"
-            size="large"
-            fullWidth
-            icon="download"
-            iconPosition="left"
-            onPress={handleSave}
-          />
+          <Button label="저장" variant="primary" size="large" fullWidth icon="download" iconPosition="left" onPress={handleSave} />
           {resultImageUrls.length > 1 && (
             <Button
               label={isDownloading ? "다운로드 중..." : "ZIP 다운로드"}
@@ -262,26 +270,10 @@ export default function ResultScreen() {
           )}
           <View style={{ flexDirection: "row", gap: 12 }}>
             <View style={{ flex: 1 }}>
-              <Button
-                label="공유하기"
-                variant="secondary"
-                size="medium"
-                fullWidth
-                icon="share-social"
-                iconPosition="left"
-                onPress={handleShare}
-              />
+              <Button label="공유하기" variant="secondary" size="medium" fullWidth icon="share-social" iconPosition="left" onPress={handleShare} />
             </View>
             <View style={{ flex: 1 }}>
-              <Button
-                label="새 프로젝트"
-                variant="secondary"
-                size="medium"
-                fullWidth
-                icon="add"
-                iconPosition="left"
-                onPress={handleNewProject}
-              />
+              <Button label="다시 만들기" variant="secondary" size="medium" fullWidth icon="refresh" iconPosition="left" onPress={handleNewProject} />
             </View>
           </View>
         </View>
