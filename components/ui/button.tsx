@@ -110,7 +110,7 @@ export function Button({
   const variantStyles: Record<ButtonVariant, ViewStyle> = {
     primary: {
       backgroundColor: disabled ? colors.muted : "transparent",
-      shadowColor: "#A855F7",
+      shadowColor: "#9C27B0",
       shadowOpacity: disabled ? 0 : 0.3,
       shadowRadius: 12,
       shadowOffset: { width: 0, height: 4 },
@@ -187,7 +187,7 @@ export function Button({
     >
       {variant === "primary" && !disabled ? (
         <LinearGradient
-          colors={["#A855F7", "#EC4899"]}
+          colors={["#9C27B0", "#E91E63"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{
@@ -196,7 +196,7 @@ export function Button({
             justifyContent: "center",
             paddingVertical: config.paddingVertical,
             paddingHorizontal: config.paddingHorizontal,
-            shadowColor: "#A855F7",
+            shadowColor: "#9C27B0",
             shadowOpacity: 0.3,
             shadowRadius: 12,
             shadowOffset: { width: 0, height: 4 },

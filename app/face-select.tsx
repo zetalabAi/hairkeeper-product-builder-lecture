@@ -136,7 +136,7 @@ export default function FaceSelectScreen() {
             style={{
               fontSize: 52,
               fontWeight: "800",
-              color: "#A855F7",
+              color: "#9C27B0",
               marginBottom: 8,
             }}
           >
@@ -158,15 +158,15 @@ export default function FaceSelectScreen() {
           <View
             style={{
               marginTop: 40,
-              backgroundColor: "#A855F720",
+              backgroundColor: "#9C27B020",
               borderWidth: 1,
-              borderColor: "#A855F740",
+              borderColor: "#9C27B040",
               borderRadius: 16,
               padding: 16,
               width: "100%",
             }}
           >
-            <Text style={{ fontSize: 13, color: "#A855F7", fontWeight: "600", marginBottom: 4 }}>
+            <Text style={{ fontSize: 13, color: "#9C27B0", fontWeight: "600", marginBottom: 4 }}>
               💡 Tip
             </Text>
             <Text style={{ fontSize: 13, color: colors.foreground, lineHeight: 20 }}>
@@ -189,13 +189,13 @@ export default function FaceSelectScreen() {
               width: 80,
               height: 80,
               borderRadius: 40,
-              backgroundColor: "#A855F720",
+              backgroundColor: "#9C27B020",
               alignItems: "center",
               justifyContent: "center",
               marginBottom: 24,
             }}
           >
-            <ActivityIndicator size="large" color="#A855F7" />
+            <ActivityIndicator size="large" color="#9C27B0" />
           </View>
           <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
             {isFacePoolLoading ? "얼굴 풀 로딩 중..." : "이미지 준비 중..."}

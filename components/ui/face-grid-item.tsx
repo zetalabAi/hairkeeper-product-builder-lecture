@@ -25,7 +25,7 @@ export function FaceGridItem({ imageUrl, selected, onPress }: FaceGridItemProps)
         borderRadius: 16,
         overflow: "hidden",
         borderWidth: selected ? 3 : 0,
-        borderColor: "#A855F7",
+        borderColor: "#9C27B0",
         opacity: pressed ? 0.85 : 1,
         transform: [{ scale: pressed ? 0.97 : 1 }],
       })}
@@ -44,7 +44,7 @@ export function FaceGridItem({ imageUrl, selected, onPress }: FaceGridItemProps)
             width: 28,
             height: 28,
             borderRadius: 14,
-            backgroundColor: "#A855F7",
+            backgroundColor: "#9C27B0",
             alignItems: "center",
             justifyContent: "center",
           }}

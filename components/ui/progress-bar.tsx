@@ -16,7 +16,7 @@ export function ProgressBar({ progress, showPercent = false }: ProgressBarProps)
           style={{
             fontSize: 13,
             fontWeight: "600",
-            color: "#A855F7",
+            color: "#9C27B0",
             textAlign: "right",
             marginBottom: 6,
           }}
@@ -33,7 +33,7 @@ export function ProgressBar({ progress, showPercent = false }: ProgressBarProps)
         }}
       >
         <LinearGradient
-          colors={["#A855F7", "#EC4899"]}
+          colors={["#9C27B0", "#E91E63"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{

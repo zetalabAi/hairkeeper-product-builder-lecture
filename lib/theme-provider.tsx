@@ -45,6 +45,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         "color-secondary": SchemeColors[colorScheme].secondary,
         "color-background": SchemeColors[colorScheme].background,
         "color-surface": SchemeColors[colorScheme].surface,
+        "color-lavender": SchemeColors[colorScheme].lavender,
         "color-foreground": SchemeColors[colorScheme].foreground,
         "color-muted": SchemeColors[colorScheme].muted,
         "color-border": SchemeColors[colorScheme].border,

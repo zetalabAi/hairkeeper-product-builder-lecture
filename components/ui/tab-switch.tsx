@@ -41,7 +41,7 @@ export function TabSwitch({ tabs, activeTab, onTabChange }: TabSwitchProps) {
           >
             {isActive ? (
               <LinearGradient
-                colors={["#A855F7", "#EC4899"]}
+                colors={["#9C27B0", "#E91E63"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={{

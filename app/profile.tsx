@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, Platform, Alert } from "react-native";
+import { View, Text, ScrollView, Pressable, Platform } from "react-native";
 import { router } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { SubScreenHeader } from "@/components/sub-screen-header";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useAuth } from "@/lib/auth-provider";
+import { useDemoAuth } from "@/lib/demo-auth-context";
 
 type ProfileItem = {
   id: string;
@@ -18,14 +18,13 @@ type ProfileItem = {
 
 export default function ProfileScreen() {
   const colors = useColors();
-  const { user, loading, signOut } = useAuth();
-  const isLoggedIn = !!user;
+  const { user, isLoggedIn, login, logout } = useDemoAuth();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    router.push("/login" as any);
+    await login();
   };
 
   const handlePress = async (item: string) => {
@@ -34,23 +33,45 @@ export default function ProfileScreen() {
     }
 
     if (item === "logout") {
-      try {
-        await signOut();
-      } catch (error: any) {
-        Alert.alert("로그아웃 실패", error?.message || "다시 시도해주세요.");
-      }
+      await logout();
       return;
     }
 
+    // TODO: 각 프로필 항목 처리
     console.log(`Pressed: ${item}`);
   };
 
   const profileItems: ProfileItem[] = [
-    { id: "subscription", label: "구독 관리", icon: "card-outline", subtitle: "출시 버전 연동 예정" },
-    { id: "payment", label: "결제 관리", icon: "wallet-outline", subtitle: "결제 수단 및 결제 내역" },
-    { id: "usage", label: "사용 통계", icon: "stats-chart-outline", subtitle: "이번 달 12회 사용" },
-    { id: "account", label: "계정 설정", icon: "settings-outline", subtitle: "이메일, 비밀번호 변경" },
-    { id: "logout", label: "로그아웃", icon: "log-out-outline" },
+    {
+      id: "subscription",
+      label: "구독 관리",
+      icon: "card-outline",
+      subtitle: user?.subscription === "premium" ? "프리미엄 플랜" : "무료 플랜",
+      badge: user?.subscription === "premium" ? "Premium" : undefined,
+    },
+    {
+      id: "payment",
+      label: "결제 관리",
+      icon: "wallet-outline",
+      subtitle: "결제 수단 및 결제 내역",
+    },
+    {
+      id: "usage",
+      label: "사용 통계",
+      icon: "stats-chart-outline",
+      subtitle: "이번 달 12회 사용",
+    },
+    {
+      id: "account",
+      label: "계정 설정",
+      icon: "settings-outline",
+      subtitle: "이메일, 비밀번호 변경",
+    },
+    {
+      id: "logout",
+      label: "로그아웃",
+      icon: "log-out-outline",
+    },
   ];
 
   return (
@@ -90,27 +111,27 @@ export default function ProfileScreen() {
               {isLoggedIn && user ? (
                 <>
                   <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground, marginBottom: 4 }}>
-                    {user.displayName || "회원"}
+                    {user.name}
                   </Text>
-                  <Text style={{ fontSize: 14, color: colors.muted }}>{user.email || "이메일 정보 없음"}</Text>
+                  <Text style={{ fontSize: 14, color: colors.muted }}>{user.email}</Text>
                 </>
               ) : (
                 <>
                   <Text style={{ fontSize: 18, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>
-                    {loading ? "인증 상태 확인 중..." : "로그인이 필요합니다"}
+                    로그인이 필요합니다
                   </Text>
                   <Text style={{ fontSize: 13, color: colors.muted }}>
-                    {loading ? "잠시만 기다려주세요" : "로그인하고 더 많은 기능을 이용하세요"}
+                    로그인하고 더 많은 기능을 이용하세요
                   </Text>
                 </>
               )}
             </View>
           </View>
 
-          {!isLoggedIn && !loading && (
+          {!isLoggedIn && (
             <View style={{ marginTop: 20 }}>
               <Button
-                label="로그인"
+                label="로그인 (데모)"
                 variant="primary"
                 size="medium"
                 fullWidth
