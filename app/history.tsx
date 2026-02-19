@@ -1,13 +1,12 @@
 import { View, Text, FlatList, Image, TouchableOpacity, Platform } from "react-native";
 import { router } from "expo-router";
-import { ScreenContainer } from "@/components/screen-container";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { SubScreenHeader } from "@/components/sub-screen-header";
-import { useColors } from "@/hooks/use-colors";
 import * as Haptics from "expo-haptics";
 import { trpc } from "@/lib/trpc";
+import { BG_PINK, COLOR_PRIMARY, COLOR_PRIMARY_LIGHT, COLOR_PRIMARY_BORDER } from "@/constants/colors";
 
 export default function HistoryScreen() {
-  const colors = useColors();
 
   // Fetch history from database
   const { data: projects, isLoading, error } = trpc.ai.getHistory.useQuery({});
@@ -33,46 +32,25 @@ export default function HistoryScreen() {
       style={{
         width: "48%",
         marginBottom: 16,
-        backgroundColor: colors.surface,
-        borderRadius: 16,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 20,
         overflow: "hidden",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        borderWidth: 1.5,
+        borderColor: COLOR_PRIMARY_BORDER,
+        elevation: 2,
       }}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
-      {/* Result Image */}
       <Image
         source={{ uri: item.resultImageUrl || item.originalImageUrl }}
-        style={{
-          width: "100%",
-          aspectRatio: 3 / 4,
-          backgroundColor: colors.border,
-        }}
+        style={{ width: "100%", aspectRatio: 3 / 4, backgroundColor: COLOR_PRIMARY_LIGHT }}
         resizeMode="cover"
       />
-
-      {/* Info */}
       <View style={{ padding: 12 }}>
-        <Text
-          style={{
-            fontSize: 14,
-            fontWeight: "600",
-            color: colors.foreground,
-            marginBottom: 4,
-          }}
-        >
+        <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1A1A", marginBottom: 4 }}>
           {item.gender === "male" ? "남성" : "여성"} - {item.style}
         </Text>
-        <Text
-          style={{
-            fontSize: 12,
-            color: colors.muted,
-          }}
-        >
+        <Text style={{ fontSize: 12, color: "#6B6B6B" }}>
           {new Date(item.createdAt).toLocaleDateString("ko-KR")}
         </Text>
       </View>
@@ -80,7 +58,8 @@ export default function HistoryScreen() {
   );
 
   return (
-    <ScreenContainer>
+    <View style={{ flex: 1, backgroundColor: BG_PINK }}>
+      <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
       <SubScreenHeader title="히스토리" />
 
       <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16 }}>
@@ -92,7 +71,7 @@ export default function HistoryScreen() {
               alignItems: "center",
             }}
           >
-            <Text style={{ fontSize: 16, color: colors.muted }}>
+            <Text style={{ fontSize: 16, color: "#6B6B6B" }}>
               로딩 중...
             </Text>
           </View>
@@ -108,7 +87,7 @@ export default function HistoryScreen() {
             <Text
               style={{
                 fontSize: 16,
-                color: colors.error,
+                color: "#F44336",
                 textAlign: "center",
                 lineHeight: 24,
               }}
@@ -128,7 +107,7 @@ export default function HistoryScreen() {
             <Text
               style={{
                 fontSize: 16,
-                color: colors.muted,
+                color: "#6B6B6B",
                 textAlign: "center",
                 lineHeight: 24,
               }}
@@ -151,6 +130,7 @@ export default function HistoryScreen() {
           />
         )}
       </View>
-    </ScreenContainer>
+      </SafeAreaView>
+    </View>
   );
 }

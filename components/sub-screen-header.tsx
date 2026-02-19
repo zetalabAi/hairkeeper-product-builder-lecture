@@ -1,39 +1,22 @@
 import { View, Text, Pressable, Platform } from "react-native";
 import { router } from "expo-router";
-import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { COLOR_PRIMARY } from "@/constants/colors";
 
 interface SubScreenHeaderProps {
   title: string;
-  /**
-   * Show back button (default: true)
-   */
   showBack?: boolean;
-  /**
-   * Show home button (default: true)
-   */
   showHome?: boolean;
-  /**
-   * Custom back handler
-   */
   onBack?: () => void;
 }
 
-/**
- * 서브 화면 헤더 컴포넌트
- * - 좌측: 뒤로가기 버튼
- * - 중앙: 제목
- * - 우측: 홈 버튼
- */
 export function SubScreenHeader({
   title,
   showBack = true,
   showHome = true,
   onBack,
 }: SubScreenHeaderProps) {
-  const colors = useColors();
-
   const handleBack = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -62,7 +45,6 @@ export function SubScreenHeader({
         paddingVertical: 16,
       }}
     >
-      {/* Left: Back Button */}
       {showBack ? (
         <Pressable
           onPress={handleBack}
@@ -70,7 +52,7 @@ export function SubScreenHeader({
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: colors.surface,
+            backgroundColor: "#FFFFFF",
             alignItems: "center",
             justifyContent: "center",
             shadowColor: "#000",
@@ -82,24 +64,16 @@ export function SubScreenHeader({
             transform: [{ translateY: pressed ? 1 : 0 }],
           })}
         >
-          <Ionicons name="chevron-back" size={22} color={colors.primary} />
+          <Ionicons name="chevron-back" size={22} color={COLOR_PRIMARY} />
         </Pressable>
       ) : (
         <View style={{ width: 40 }} />
       )}
 
-      {/* Center: Title */}
-      <Text
-        style={{
-          fontSize: 18,
-          fontWeight: "600",
-          color: colors.foreground,
-        }}
-      >
+      <Text style={{ fontSize: 18, fontWeight: "600", color: "#1A1A1A" }}>
         {title}
       </Text>
 
-      {/* Right: Home Button */}
       {showHome ? (
         <Pressable
           onPress={handleHome}
@@ -107,7 +81,7 @@ export function SubScreenHeader({
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: colors.surface,
+            backgroundColor: "#FFFFFF",
             alignItems: "center",
             justifyContent: "center",
             shadowColor: "#000",
@@ -119,7 +93,7 @@ export function SubScreenHeader({
             transform: [{ translateY: pressed ? 1 : 0 }],
           })}
         >
-          <Ionicons name="home-outline" size={22} color={colors.primary} />
+          <Ionicons name="home-outline" size={22} color={COLOR_PRIMARY} />
         </Pressable>
       ) : (
         <View style={{ width: 40 }} />
