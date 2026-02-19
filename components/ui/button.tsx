@@ -1,4 +1,5 @@
 import { Pressable, Text, View, Platform, type PressableProps, type ViewStyle } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/use-colors";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
@@ -108,9 +109,9 @@ export function Button({
   // Variant styles
   const variantStyles: Record<ButtonVariant, ViewStyle> = {
     primary: {
-      backgroundColor: disabled ? colors.muted : colors.primary,
-      shadowColor: "#000",
-      shadowOpacity: disabled ? 0 : 0.15,
+      backgroundColor: disabled ? colors.muted : "transparent",
+      shadowColor: "#A855F7",
+      shadowOpacity: disabled ? 0 : 0.3,
       shadowRadius: 12,
       shadowOffset: { width: 0, height: 4 },
       elevation: disabled ? 0 : 4,
@@ -137,27 +138,8 @@ export function Button({
 
   const iconColor = disabled ? colors.muted : textColor;
 
-  return (
-    <Pressable
-      onPress={handlePress}
-      disabled={disabled}
-      style={({ pressed }) => [
-        {
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          paddingVertical: config.paddingVertical,
-          paddingHorizontal: config.paddingHorizontal,
-          borderRadius: config.borderRadius,
-          opacity: disabled ? 0.4 : pressed ? 0.85 : 1,
-          transform: [{ translateY: pressed && !disabled ? 1 : 0 }],
-          width: fullWidth ? "100%" : undefined,
-        },
-        variantStyles[variant],
-        style,
-      ]}
-      {...props}
-    >
+  const innerContent = (
+    <>
       {icon && iconPosition === "left" && (
         <Ionicons
           name={icon}
@@ -182,6 +164,62 @@ export function Button({
           color={iconColor}
           style={{ marginLeft: 8 }}
         />
+      )}
+    </>
+  );
+
+  return (
+    <Pressable
+      onPress={handlePress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        {
+          borderRadius: config.borderRadius,
+          opacity: disabled ? 0.4 : pressed ? 0.85 : 1,
+          transform: [{ translateY: pressed && !disabled ? 1 : 0 }],
+          width: fullWidth ? "100%" : undefined,
+          overflow: "hidden",
+        },
+        variant !== "primary" ? variantStyles[variant] : undefined,
+        style,
+      ]}
+      {...props}
+    >
+      {variant === "primary" && !disabled ? (
+        <LinearGradient
+          colors={["#A855F7", "#EC4899"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: config.paddingVertical,
+            paddingHorizontal: config.paddingHorizontal,
+            shadowColor: "#A855F7",
+            shadowOpacity: 0.3,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 4,
+          }}
+        >
+          {innerContent}
+        </LinearGradient>
+      ) : (
+        <View
+          style={[
+            {
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: config.paddingVertical,
+              paddingHorizontal: config.paddingHorizontal,
+            },
+            variantStyles[variant],
+          ]}
+        >
+          {innerContent}
+        </View>
       )}
     </Pressable>
   );
