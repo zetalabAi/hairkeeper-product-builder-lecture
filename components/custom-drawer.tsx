@@ -1,6 +1,6 @@
 import { Animated, Pressable, Text, View, StyleSheet, Platform } from "react-native";
 import { useEffect, useRef, useState } from "react";
-import { router } from "expo-router";
+import { router, usePathname } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useDrawer } from "@/lib/drawer-context";
@@ -28,6 +28,10 @@ const MENU_ITEMS = [
 export function CustomDrawer() {
   const { isOpen, close } = useDrawer();
   const { user, isLoggedIn, logout } = useDemoAuth();
+  const pathname = usePathname();
+
+  // 홈 탭에서만 드로어 표시 - 서브스크린에서는 숨김 (isOpen 상태는 유지)
+  const isOnHomeTab = pathname === "/" || pathname.startsWith("/(tabs)");
 
   const [mounted, setMounted] = useState(isOpen);
   // 우측에서 슬라이드: 초기값 +DRAWER_WIDTH (화면 오른쪽 밖)
@@ -67,6 +71,8 @@ export function CustomDrawer() {
     logout();
   };
 
+  // 서브스크린에서는 드로어를 숨김 (상태는 유지 - 홈으로 돌아오면 다시 표시)
+  if (!isOnHomeTab) return null;
   if (!mounted) return null;
 
   return (
