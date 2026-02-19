@@ -135,16 +135,16 @@ export default function FaceSelectScreen() {
           <Text style={{ fontSize: 56, fontWeight: "800", color: COLOR_PRIMARY, marginBottom: 4 }}>
             {Math.round(progress)}%
           </Text>
-          <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 6, textAlign: "center" }}>
+          <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1A1A", marginBottom: 6, textAlign: "center" }}>
             AI가 얼굴을 합성 중...
           </Text>
-          <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 28, textAlign: "center" }}>
+          <Text style={{ fontSize: 14, color: "#4A4A4A", marginBottom: 28, textAlign: "center" }}>
             {progressMessage}
           </Text>
           <View style={{ width: "100%", marginBottom: 12 }}>
             <ProgressBar progress={progress} />
           </View>
-          <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 32 }}>예상 시간: 약 20초</Text>
+          <Text style={{ fontSize: 13, color: "#4A4A4A", marginBottom: 32 }}>예상 시간: 약 20초</Text>
 
           {/* Tip Card */}
           <View
@@ -165,7 +165,7 @@ export default function FaceSelectScreen() {
             <Text style={{ fontSize: 13, color: COLOR_PRIMARY, fontWeight: "700", marginBottom: 6 }}>
               💡 알고 계셨나요?
             </Text>
-            <Text style={{ fontSize: 13, color: colors.foreground, lineHeight: 20 }}>
+            <Text style={{ fontSize: 13, color: "#1A1A1A", lineHeight: 20 }}>
               HairKeeper는 머리카락을 100% 보존합니다.{"\n"}얼굴만 교체하여 자연스러운 결과를 제공해요!
             </Text>
           </View>
@@ -219,13 +219,13 @@ export default function FaceSelectScreen() {
             >
               <Ionicons name="arrow-back" size={20} color={COLOR_PRIMARY} />
             </Pressable>
-            <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground }}>얼굴 선택</Text>
+            <Text style={{ fontSize: 20, fontWeight: "800", color: "#1A1A1A" }}>얼굴 선택</Text>
           </View>
           <View style={{ backgroundColor: COLOR_PRIMARY_LIGHT, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
             <Text style={{ fontSize: 13, fontWeight: "600", color: COLOR_PRIMARY }}>2 / 3</Text>
           </View>
         </View>
-        <Text style={{ fontSize: 13, color: colors.muted, marginLeft: 52 }}>원하는 얼굴을 골라주세요</Text>
+        <Text style={{ fontSize: 13, color: "#4A4A4A", marginLeft: 52 }}>원하는 얼굴을 골라주세요</Text>
       </View>
 
       <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 16 }}>

@@ -92,8 +92,8 @@ export default function PhotoSelectScreen() {
           <Ionicons name="arrow-back" size={22} color={COLOR_PRIMARY} />
         </Pressable>
         <View>
-          <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground }}>사진 선택</Text>
-          <Text style={{ fontSize: 13, color: colors.muted, marginTop: 2 }}>원하는 방법을 선택해주세요</Text>
+          <Text style={{ fontSize: 20, fontWeight: "800", color: "#1A1A1A" }}>사진 선택</Text>
+          <Text style={{ fontSize: 13, color: "#4A4A4A", marginTop: 2 }}>원하는 방법을 선택해주세요</Text>
         </View>
       </View>
 
@@ -131,10 +131,10 @@ export default function PhotoSelectScreen() {
             >
               <Ionicons name={opt.icon} size={32} color={COLOR_PRIMARY} />
             </View>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginBottom: 4 }}>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1A1A", marginBottom: 4 }}>
               {opt.label}
             </Text>
-            <Text style={{ fontSize: 13, color: colors.muted }}>{opt.desc}</Text>
+            <Text style={{ fontSize: 13, color: "#4A4A4A" }}>{opt.desc}</Text>
           </Pressable>
         ))}
       </View>

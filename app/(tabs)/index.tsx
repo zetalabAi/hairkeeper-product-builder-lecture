@@ -75,10 +75,10 @@ export default function HomeScreen() {
 
         {/* Welcome */}
         <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>
-          <Text style={{ fontSize: 22, fontWeight: "700", color: colors.foreground }}>
+          <Text style={{ fontSize: 22, fontWeight: "800", color: "#1A1A1A" }}>
             안녕하세요 디자이너님! 👋
           </Text>
-          <Text style={{ fontSize: 15, color: colors.muted, marginTop: 4 }}>
+          <Text style={{ fontSize: 15, color: "#4A4A4A", marginTop: 4 }}>
             오늘도 멋진 작업 하세요
           </Text>
         </View>
@@ -128,7 +128,7 @@ export default function HomeScreen() {
 
         {/* Action Grid */}
         <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
-          <Text style={{ fontSize: 17, fontWeight: "700", color: colors.foreground, marginBottom: 16 }}>
+          <Text style={{ fontSize: 17, fontWeight: "800", color: "#1A1A1A", marginBottom: 16 }}>
             작업 시작하기
           </Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
@@ -139,19 +139,18 @@ export default function HomeScreen() {
                 style={({ pressed }) => ({
                   width: "47%",
                   aspectRatio: 1,
-                  backgroundColor: "#FFFFFF",
+                  backgroundColor: pressed ? COLOR_PRIMARY_LIGHT : "#FFFFFF",
                   borderRadius: 20,
-                  borderWidth: 1.5,
+                  borderWidth: 2,
                   borderColor: COLOR_PRIMARY_BORDER,
                   alignItems: "center",
                   justifyContent: "center",
-                  shadowColor: "#000",
-                  shadowOpacity: 0.05,
-                  shadowRadius: 8,
-                  shadowOffset: { width: 0, height: 2 },
-                  elevation: 2,
+                  shadowColor: COLOR_PRIMARY,
+                  shadowOpacity: 0.12,
+                  shadowRadius: 10,
+                  shadowOffset: { width: 0, height: 3 },
+                  elevation: 4,
                   opacity: pressed ? 0.85 : 1,
-                  backgroundColor: pressed ? COLOR_PRIMARY_LIGHT : "#FFFFFF",
                 })}
               >
                 <View
@@ -167,7 +166,7 @@ export default function HomeScreen() {
                 >
                   <Ionicons name={btn.icon as any} size={26} color={COLOR_PRIMARY} />
                 </View>
-                <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>
+                <Text style={{ fontSize: 14, fontWeight: "700", color: "#1A1A1A" }}>
                   {btn.label}
                 </Text>
               </Pressable>
@@ -178,7 +177,7 @@ export default function HomeScreen() {
         {/* Recent Work */}
         <View style={{ paddingHorizontal: 24, paddingBottom: 32 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <Text style={{ fontSize: 17, fontWeight: "700", color: colors.foreground }}>
+            <Text style={{ fontSize: 17, fontWeight: "800", color: "#1A1A1A" }}>
               최근 작업
             </Text>
             <Pressable onPress={() => handleNav("/history")}>
@@ -196,7 +195,7 @@ export default function HomeScreen() {
             }}
           >
             <Ionicons name="images-outline" size={36} color={colors.muted} />
-            <Text style={{ fontSize: 14, color: colors.muted, marginTop: 10, textAlign: "center" }}>
+            <Text style={{ fontSize: 14, color: "#4A4A4A", marginTop: 10, textAlign: "center" }}>
               아직 작업 기록이 없습니다.{"\n"}첫 프로젝트를 시작해보세요!
             </Text>
           </View>

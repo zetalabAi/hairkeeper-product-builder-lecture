@@ -143,7 +143,7 @@ export default function ResultScreen() {
         >
           <Ionicons name="arrow-back" size={22} color={COLOR_PRIMARY} />
         </Pressable>
-        <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground }}>결과 확인</Text>
+        <Text style={{ fontSize: 18, fontWeight: "800", color: "#1A1A1A" }}>결과 확인</Text>
         <Pressable
           onPress={handleShare}
           style={({ pressed }) => ({
@@ -209,6 +209,7 @@ export default function ResultScreen() {
               >
                 결과 이미지를 불러오지 못했습니다.
               </Text>
+
             </View>
           )}
           {/* Label Badge */}
