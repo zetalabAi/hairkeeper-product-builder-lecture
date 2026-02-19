@@ -23,7 +23,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       root.dataset.theme = scheme;
       root.classList.toggle("dark", scheme === "dark");
       const palette = SchemeColors[scheme];
-      Object.entries(palette).forEach(([token, value]) => {
+      (Object.entries(palette) as [string, string][]).forEach(([token, value]) => {
         root.style.setProperty(`--color-${token}`, value);
       });
     }
@@ -42,6 +42,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     () =>
       vars({
         "color-primary": SchemeColors[colorScheme].primary,
+        "color-secondary": SchemeColors[colorScheme].secondary,
         "color-background": SchemeColors[colorScheme].background,
         "color-surface": SchemeColors[colorScheme].surface,
         "color-foreground": SchemeColors[colorScheme].foreground,

@@ -1,7 +1,9 @@
 /** @type {const} */
 const themeColors = {
-  // Primary: 저채도 보라색 브랜드 컴러 (iOS systemPurple 대체)
-  primary: { light: '#8B7FF5', dark: '#8B7FF5' },
+  // Primary: 핑크-퍼플 브랜드 컬러
+  primary: { light: '#A855F7', dark: '#A855F7' },
+  // Secondary: 핑크 악센트
+  secondary: { light: '#EC4899', dark: '#EC4899' },
   // Background: 순수 검정 대신 미세한 색조
   background: { light: '#FAFAFA', dark: '#0A0A0B' },
   // Surface: 명도 차이로 레이어 구분
