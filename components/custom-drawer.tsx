@@ -17,7 +17,6 @@ const DRAWER_WIDTH = 280;
 const ANIMATION_DURATION = 240;
 
 const MENU_ITEMS = [
-  { icon: "home-outline" as const, label: "홈", route: "/(tabs)" },
   { icon: "images-outline" as const, label: "결과물", route: "/results" },
   { icon: "star-outline" as const, label: "즐겨찾기", route: "/favorites" },
   { icon: "stats-chart-outline" as const, label: "사용 통계", route: "/statistics" },
@@ -59,7 +58,7 @@ export function CustomDrawer() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    close();
+    // 패널 닫지 않고 이동 - 뒤로가기 시 패널 유지
     router.push(route as any);
   };
 
