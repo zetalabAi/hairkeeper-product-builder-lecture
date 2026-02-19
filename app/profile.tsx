@@ -1,12 +1,17 @@
 import { View, Text, ScrollView, Pressable, Platform } from "react-native";
-import { router } from "expo-router";
-import { ScreenContainer } from "@/components/screen-container";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { SubScreenHeader } from "@/components/sub-screen-header";
 import { Button } from "@/components/ui/button";
-import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useDemoAuth } from "@/lib/demo-auth-context";
+import {
+  BG_PINK,
+  COLOR_PRIMARY,
+  COLOR_PRIMARY_LIGHT,
+  COLOR_PRIMARY_BORDER,
+  COLOR_SECONDARY,
+} from "@/constants/colors";
 
 type ProfileItem = {
   id: string;
@@ -17,7 +22,6 @@ type ProfileItem = {
 };
 
 export default function ProfileScreen() {
-  const colors = useColors();
   const { user, isLoggedIn, login, logout } = useDemoAuth();
 
   const handleLogin = async () => {
@@ -75,17 +79,20 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <ScreenContainer className="bg-background">
+    <View style={{ flex: 1, backgroundColor: BG_PINK }}>
+      <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
       <SubScreenHeader title="프로필" />
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 8 }}>
         <View
           style={{
-            backgroundColor: colors.surface,
+            backgroundColor: "#FFFFFF",
             borderRadius: 24,
             padding: 24,
             marginBottom: 24,
-            shadowColor: "#000",
+            borderWidth: 1.5,
+            borderColor: COLOR_PRIMARY_BORDER,
+            shadowColor: COLOR_PRIMARY,
             shadowOpacity: 0.08,
             shadowRadius: 12,
             shadowOffset: { width: 0, height: 4 },
@@ -97,30 +104,30 @@ export default function ProfileScreen() {
               style={{
                 width: 72,
                 height: 72,
-                borderRadius: 20,
-                backgroundColor: colors.primary + "20",
+                borderRadius: 36,
+                backgroundColor: COLOR_PRIMARY_LIGHT,
                 alignItems: "center",
                 justifyContent: "center",
                 marginRight: 16,
               }}
             >
-              <Ionicons name="person" size={36} color={colors.primary} />
+              <Ionicons name="person" size={36} color={COLOR_PRIMARY} />
             </View>
 
             <View style={{ flex: 1 }}>
               {isLoggedIn && user ? (
                 <>
-                  <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground, marginBottom: 4 }}>
+                  <Text style={{ fontSize: 20, fontWeight: "700", color: "#1A1A1A", marginBottom: 4 }}>
                     {user.name}
                   </Text>
-                  <Text style={{ fontSize: 14, color: colors.muted }}>{user.email}</Text>
+                  <Text style={{ fontSize: 14, color: "#6B6B6B" }}>{user.email}</Text>
                 </>
               ) : (
                 <>
-                  <Text style={{ fontSize: 18, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>
+                  <Text style={{ fontSize: 18, fontWeight: "600", color: "#1A1A1A", marginBottom: 4 }}>
                     로그인이 필요합니다
                   </Text>
-                  <Text style={{ fontSize: 13, color: colors.muted }}>
+                  <Text style={{ fontSize: 13, color: "#6B6B6B" }}>
                     로그인하고 더 많은 기능을 이용하세요
                   </Text>
                 </>
@@ -150,14 +157,16 @@ export default function ProfileScreen() {
                 key={item.id}
                 onPress={() => handlePress(item.id)}
                 style={({ pressed }) => ({
-                  backgroundColor: colors.surface,
+                  backgroundColor: "#FFFFFF",
                   borderRadius: 20,
                   padding: 20,
                   marginBottom: 12,
                   flexDirection: "row",
                   alignItems: "center",
-                  shadowColor: "#000",
-                  shadowOpacity: 0.05,
+                  borderWidth: 1.5,
+                  borderColor: item.id === "logout" ? "#FCE4EC" : COLOR_PRIMARY_BORDER,
+                  shadowColor: item.id === "logout" ? COLOR_SECONDARY : COLOR_PRIMARY,
+                  shadowOpacity: 0.06,
                   shadowRadius: 8,
                   shadowOffset: { width: 0, height: 2 },
                   elevation: 2,
@@ -169,14 +178,14 @@ export default function ProfileScreen() {
                   style={{
                     width: 44,
                     height: 44,
-                    borderRadius: 14,
-                    backgroundColor: item.id === "logout" ? colors.error + "20" : colors.primary + "20",
+                    borderRadius: 22,
+                    backgroundColor: item.id === "logout" ? "#FCE4EC" : COLOR_PRIMARY_LIGHT,
                     alignItems: "center",
                     justifyContent: "center",
                     marginRight: 16,
                   }}
                 >
-                  <Ionicons name={item.icon} size={24} color={item.id === "logout" ? colors.error : colors.primary} />
+                  <Ionicons name={item.icon} size={24} color={item.id === "logout" ? COLOR_SECONDARY : COLOR_PRIMARY} />
                 </View>
 
                 <View style={{ flex: 1 }}>
@@ -185,7 +194,7 @@ export default function ProfileScreen() {
                       style={{
                         fontSize: 16,
                         fontWeight: "600",
-                        color: item.id === "logout" ? colors.error : colors.foreground,
+                        color: item.id === "logout" ? COLOR_SECONDARY : "#1A1A1A",
                       }}
                     >
                       {item.label}
@@ -193,7 +202,7 @@ export default function ProfileScreen() {
                     {item.badge && (
                       <View
                         style={{
-                          backgroundColor: colors.primary,
+                          backgroundColor: COLOR_PRIMARY,
                           paddingHorizontal: 8,
                           paddingVertical: 2,
                           borderRadius: 8,
@@ -204,15 +213,16 @@ export default function ProfileScreen() {
                       </View>
                     )}
                   </View>
-                  {item.subtitle && <Text style={{ fontSize: 13, color: colors.muted }}>{item.subtitle}</Text>}
+                  {item.subtitle && <Text style={{ fontSize: 13, color: "#6B6B6B" }}>{item.subtitle}</Text>}
                 </View>
 
-                {item.id !== "logout" && <Ionicons name="chevron-forward" size={20} color={colors.muted} />}
+                {item.id !== "logout" && <Ionicons name="chevron-forward" size={20} color="#9E9E9E" />}
               </Pressable>
             ))}
           </View>
         )}
       </ScrollView>
-    </ScreenContainer>
+      </SafeAreaView>
+    </View>
   );
 }

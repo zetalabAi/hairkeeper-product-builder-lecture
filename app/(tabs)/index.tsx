@@ -6,6 +6,7 @@ import { useColors } from "@/hooks/use-colors";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { GRADIENT_PRIMARY, BG_PINK, COLOR_PRIMARY, COLOR_PRIMARY_LIGHT, COLOR_PRIMARY_BORDER } from "@/constants/colors";
+import { useDrawer } from "@/lib/drawer-context";
 
 const ACTION_BUTTONS = [
   { icon: "camera", label: "사진 선택", route: "/photo-select" },
@@ -16,6 +17,7 @@ const ACTION_BUTTONS = [
 
 export default function HomeScreen() {
   const colors = useColors();
+  const { open: openDrawer } = useDrawer();
 
   const handleNav = (route: string) => {
     if (Platform.OS !== "web") {
@@ -32,33 +34,14 @@ export default function HomeScreen() {
           style={{
             flexDirection: "row",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "flex-end",
             paddingHorizontal: 24,
             paddingTop: 56,
             paddingBottom: 8,
           }}
         >
           <Pressable
-            style={({ pressed }) => ({
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: "#FFFFFF",
-              alignItems: "center",
-              justifyContent: "center",
-              shadowColor: "#000",
-              shadowOpacity: 0.06,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 2 },
-              elevation: 2,
-              opacity: pressed ? 0.8 : 1,
-            })}
-          >
-            <Ionicons name="menu" size={22} color={COLOR_PRIMARY} />
-          </Pressable>
-
-          <Pressable
-            onPress={() => handleNav("/profile")}
+            onPress={openDrawer}
             style={({ pressed }) => ({
               width: 44,
               height: 44,
@@ -69,7 +52,7 @@ export default function HomeScreen() {
               opacity: pressed ? 0.8 : 1,
             })}
           >
-            <Ionicons name="person" size={20} color="#FFFFFF" />
+            <Ionicons name="menu" size={22} color="#FFFFFF" />
           </Pressable>
         </View>
 

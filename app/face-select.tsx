@@ -1,4 +1,4 @@
-import { View, Text, FlatList, Platform, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, Platform, ActivityIndicator, Pressable } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
